@@ -1,0 +1,20 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "gylzdBTF1vUni7zfNg1lG"
+uri = "file://artifacts/trekmarket/public/images/hero.png"
+type = "image"
+title = "Himalayan sunrise hiker"
+
+[[generated]]
+id = "DBCd-LHIRSa7iTtdsc2xN"
+uri = "file://artifacts/trekmarket/public/images/trek-1.png"
+type = "image"
+title = "Everest landscape flags"
+
+[[generated]]
+id = "rHiD2gAUlpIMeDBIQbcGk"
+uri = "file://artifacts/trekmarket/public/images/trek-2.png"
+type = "image"
+title = "Annapurna green valleys"

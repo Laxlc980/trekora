@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "TrekMarket Nepal"
+version = "1.0.0"
+id = "artifacts/trekmarket"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19339
+
+[services.development]
+run = "pnpm --filter @workspace/trekmarket run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/trekmarket", "run", "build" ]
+publicDir = "artifacts/trekmarket/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19339"
+BASE_PATH = "/"

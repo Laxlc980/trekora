@@ -1,0 +1,153 @@
+Build a full-stack web application called "TrekMarket Nepal" – a two-sided trekking marketplace and planning platform.
+
+TECH STACK:
+
+* Frontend: React (modern, responsive UI)
+* Backend: Node.js + Express
+* Database: MongoDB
+* Authentication: JWT-based login/signup
+
+USER ROLES:
+
+1. Trekker (Customer)
+2. Agency / Guide (Supplier)
+
+---
+
+## CORE FEATURES
+
+1. AUTH SYSTEM:
+
+* Users can register as either:
+  a) Trekker
+  b) Agency/Guide
+* Login/logout functionality
+* Profile management
+
+---
+
+2. TREKS (FIXED MARKETPLACE):
+
+* Agencies can create trekking packages:
+
+  * Title
+  * Destination
+  * Duration
+  * Start date
+  * Price
+  * Max group size
+  * Description
+
+* Trekkers can:
+
+  * Browse all treks
+  * View details
+  * See number of participants
+
+---
+
+3. JOIN REQUEST SYSTEM:
+
+* Trekkers can request to join a trek
+
+* Agency can:
+
+  * Accept or reject request
+
+* If accepted:
+
+  * Trekker proceeds to payment (advance % simulation)
+
+---
+
+4. CUSTOM TREK REQUEST (REVERSE MARKETPLACE):
+
+* Trekkers can create a custom request:
+
+  * Destination
+  * Budget
+  * Dates
+  * Group size (optional)
+  * Additional notes
+
+* Agencies can:
+
+  * View all requests
+  * Submit offers (bids):
+
+    * Proposed price
+    * Plan/description
+    * Message
+
+* Trekker can:
+
+  * View all offers
+  * Select one offer
+
+---
+
+5. BOOKING & PAYMENT:
+
+* After selecting a trek or offer:
+
+  * User pays advance % (mock payment system)
+* Show booking confirmation
+* Include cancellation policy text
+
+---
+
+6. GROUP MANAGEMENT:
+
+* Each trek has a group
+* Agency can:
+
+  * View members
+  * Manage participants
+
+---
+
+7. DASHBOARDS:
+
+TREKKER DASHBOARD:
+
+* View joined treks
+* View pending requests
+* View custom requests and offers
+
+AGENCY DASHBOARD:
+
+* Manage posted treks
+* View join requests
+* View and respond to custom trek requests
+
+---
+
+8. MAP INTEGRATION:
+
+* Use Google Maps API
+* Show trek location overview
+
+---
+
+UI/UX:
+
+* Clean navigation:
+  Home | Explore Treks | Custom Requests | Dashboard | Profile
+* Mobile responsive design
+
+---
+
+DATA:
+
+* Use dummy data for initial testing
+
+---
+
+GOAL:
+Build a working MVP of a two-sided trekking marketplace with:
+
+* Fixed trek booking
+* Custom request bidding system
+* Basic payment simulation
+
+---

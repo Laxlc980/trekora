@@ -1,22 +1,36 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: TrekMarket Nepal API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: Auth
+    description: Browser and mobile authentication endpoints.
+  - name: users
+    description: User profile management
+  - name: treks
+    description: Trek package management
+  - name: joinRequests
+    description: Trek join request management
+  - name: customRequests
+    description: Custom trek request management
+  - name: bids
+    description: Agency bid management
+  - name: bookings
+    description: Booking and payment management
+  - name: dashboard
+    description: Dashboard data
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,7 +38,663 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/user:
+    get:
+      tags: [Auth]
+      operationId: getCurrentAuthUser
+      summary: Get the currently authenticated user
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '200':
+          description: Auth status resolved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUserEnvelope'
+  /login:
+    get:
+      tags: [Auth]
+      operationId: beginBrowserLogin
+      summary: Start the browser OIDC login flow
+      parameters:
+        - name: returnTo
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to the OIDC authorization endpoint.
+  /callback:
+    get:
+      tags: [Auth]
+      operationId: handleBrowserLoginCallback
+      summary: Complete the browser OIDC login flow
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: iss
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uri
+      responses:
+        '302':
+          description: Redirect to returnTo on success.
+  /logout:
+    get:
+      tags: [Auth]
+      operationId: logoutBrowserSession
+      summary: Clear the session and begin OIDC logout
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+        - $ref: '#/components/parameters/SessionCookie'
+      responses:
+        '302':
+          description: Redirect to the OIDC provider logout URL.
+  /mobile-auth/token-exchange:
+    post:
+      tags: [Auth]
+      operationId: exchangeMobileAuthorizationCode
+      summary: Exchange a mobile OIDC code for a session token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileTokenExchangeRequest'
+      responses:
+        '200':
+          description: Session created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MobileTokenExchangeSuccess'
+        '400':
+          description: Missing or invalid required fields.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '401':
+          description: Token did not contain usable claims.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+        '500':
+          description: Token exchange failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorEnvelope'
+  /mobile-auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logoutMobileSession
+      summary: Delete a mobile session token
+      parameters:
+        - $ref: '#/components/parameters/AuthorizationSessionHeader'
+      responses:
+        '200':
+          description: Logout processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogoutSuccess'
+
+  /users/me:
+    get:
+      tags: [users]
+      operationId: getMyProfile
+      summary: Get current user's full profile
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized
+    put:
+      tags: [users]
+      operationId: updateMyProfile
+      summary: Update current user's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileBody'
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized
+
+  /users/me/role:
+    post:
+      tags: [users]
+      operationId: setUserRole
+      summary: Set user role (trekker or agency) after first login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetRoleBody'
+      responses:
+        '200':
+          description: Role set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized
+
+  /treks:
+    get:
+      tags: [treks]
+      operationId: listTreks
+      summary: List all trek packages
+      parameters:
+        - name: destination
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: minPrice
+          in: query
+          required: false
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          required: false
+          schema:
+            type: number
+        - name: difficulty
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of treks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trek'
+    post:
+      tags: [treks]
+      operationId: createTrek
+      summary: Create a new trek package (agency only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTrekBody'
+      responses:
+        '201':
+          description: Created trek
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trek'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - agency only
+
+  /treks/featured:
+    get:
+      tags: [treks]
+      operationId: getFeaturedTreks
+      summary: Get featured/popular trek packages
+      responses:
+        '200':
+          description: Featured treks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trek'
+
+  /treks/{trekId}:
+    get:
+      tags: [treks]
+      operationId: getTrek
+      summary: Get trek details
+      parameters:
+        - name: trekId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Trek details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trek'
+        '404':
+          description: Not found
+    put:
+      tags: [treks]
+      operationId: updateTrek
+      summary: Update a trek (agency owner only)
+      parameters:
+        - name: trekId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTrekBody'
+      responses:
+        '200':
+          description: Updated trek
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trek'
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+    delete:
+      tags: [treks]
+      operationId: deleteTrek
+      summary: Delete a trek (agency owner only)
+      parameters:
+        - name: trekId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '403':
+          description: Forbidden
+
+  /treks/{trekId}/join-requests:
+    get:
+      tags: [joinRequests]
+      operationId: listJoinRequests
+      summary: List join requests for a trek (agency only)
+      parameters:
+        - name: trekId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Join requests list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JoinRequest'
+    post:
+      tags: [joinRequests]
+      operationId: createJoinRequest
+      summary: Request to join a trek (trekker only)
+      parameters:
+        - name: trekId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateJoinRequestBody'
+      responses:
+        '201':
+          description: Join request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRequest'
+        '401':
+          description: Unauthorized
+
+  /join-requests/{requestId}:
+    get:
+      tags: [joinRequests]
+      operationId: getJoinRequest
+      summary: Get a single join request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Join request details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRequest'
+    put:
+      tags: [joinRequests]
+      operationId: updateJoinRequest
+      summary: Accept or reject a join request (agency only)
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateJoinRequestBody'
+      responses:
+        '200':
+          description: Updated join request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRequest'
+        '403':
+          description: Forbidden
+
+  /custom-requests:
+    get:
+      tags: [customRequests]
+      operationId: listCustomRequests
+      summary: List custom trek requests (agencies see all open; trekkers see their own)
+      responses:
+        '200':
+          description: Custom requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomRequest'
+    post:
+      tags: [customRequests]
+      operationId: createCustomRequest
+      summary: Create a custom trek request (trekker only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomRequestBody'
+      responses:
+        '201':
+          description: Created custom request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomRequest'
+        '401':
+          description: Unauthorized
+
+  /custom-requests/{requestId}:
+    get:
+      tags: [customRequests]
+      operationId: getCustomRequest
+      summary: Get custom request details
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Custom request details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomRequest'
+        '404':
+          description: Not found
+
+  /custom-requests/{requestId}/bids:
+    get:
+      tags: [bids]
+      operationId: listBids
+      summary: List bids on a custom request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bids list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bid'
+    post:
+      tags: [bids]
+      operationId: createBid
+      summary: Submit a bid on a custom request (agency only)
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBidBody'
+      responses:
+        '201':
+          description: Bid created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bid'
+        '401':
+          description: Unauthorized
+
+  /bids/{bidId}/select:
+    post:
+      tags: [bids]
+      operationId: selectBid
+      summary: Select a bid (trekker only — closes the custom request)
+      parameters:
+        - name: bidId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bid selected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bid'
+        '403':
+          description: Forbidden
+
+  /bookings:
+    get:
+      tags: [bookings]
+      operationId: listMyBookings
+      summary: List current user's bookings
+      responses:
+        '200':
+          description: Bookings list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+    post:
+      tags: [bookings]
+      operationId: createBooking
+      summary: Create a booking with mock payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingBody'
+      responses:
+        '201':
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '401':
+          description: Unauthorized
+
+  /bookings/{bookingId}:
+    get:
+      tags: [bookings]
+      operationId: getBooking
+      summary: Get booking details
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '404':
+          description: Not found
+    delete:
+      tags: [bookings]
+      operationId: cancelBooking
+      summary: Cancel a booking
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+
+  /dashboard/trekker:
+    get:
+      tags: [dashboard]
+      operationId: getTrekkerDashboard
+      summary: Trekker dashboard summary
+      responses:
+        '200':
+          description: Trekker dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrekkerDashboard'
+        '401':
+          description: Unauthorized
+
+  /dashboard/agency:
+    get:
+      tags: [dashboard]
+      operationId: getAgencyDashboard
+      summary: Agency dashboard summary
+      responses:
+        '200':
+          description: Agency dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgencyDashboard'
+        '401':
+          description: Unauthorized
+
+  /destinations/popular:
+    get:
+      tags: [treks]
+      operationId: getPopularDestinations
+      summary: Get popular trek destinations with counts
+      responses:
+        '200':
+          description: Popular destinations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DestinationStat'
+
 components:
+  parameters:
+    AuthorizationSessionHeader:
+      name: Authorization
+      in: header
+      required: false
+      description: Opaque session token — `Bearer <sid>`.
+      schema:
+        type: string
+    SessionCookie:
+      name: sid
+      in: cookie
+      required: false
+      description: Browser session cookie.
+      schema:
+        type: string
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +704,451 @@ components:
       required:
         - status
 
+    AuthUser:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl]
+      properties:
+        id:
+          type: string
+        email:
+          type: [string, 'null']
+          format: email
+        firstName:
+          type: [string, 'null']
+        lastName:
+          type: [string, 'null']
+        profileImageUrl:
+          type: [string, 'null']
+    AuthUserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: '#/components/schemas/AuthUser'
+            - type: 'null'
+    MobileTokenExchangeRequest:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code:
+          type: string
+          minLength: 1
+        code_verifier:
+          type: string
+          minLength: 1
+        redirect_uri:
+          type: string
+          minLength: 1
+          format: uri
+        state:
+          type: string
+          minLength: 1
+        nonce:
+          type: string
+          minLength: 1
+    MobileTokenExchangeSuccess:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+    LogoutSuccess:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+          const: true
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    SuccessResponse:
+      type: object
+      required: [success]
+      properties:
+        success:
+          type: boolean
+
+    UserProfile:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl, role, createdAt]
+      properties:
+        id:
+          type: string
+        email:
+          type: [string, 'null']
+        firstName:
+          type: [string, 'null']
+        lastName:
+          type: [string, 'null']
+        profileImageUrl:
+          type: [string, 'null']
+        role:
+          type: [string, 'null']
+          enum: [trekker, agency, null]
+        agencyName:
+          type: [string, 'null']
+        bio:
+          type: [string, 'null']
+        phone:
+          type: [string, 'null']
+        location:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        bio:
+          type: string
+        phone:
+          type: string
+        location:
+          type: string
+        agencyName:
+          type: string
+
+    SetRoleBody:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          enum: [trekker, agency]
+        agencyName:
+          type: string
+
+    Trek:
+      type: object
+      required: [id, agencyId, title, destination, duration, startDate, price, maxGroupSize, description, status, currentParticipants, difficultyLevel, createdAt]
+      properties:
+        id:
+          type: string
+        agencyId:
+          type: string
+        agencyName:
+          type: [string, 'null']
+        title:
+          type: string
+        destination:
+          type: string
+        duration:
+          type: integer
+          description: Duration in days
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: [string, 'null']
+          format: date
+        price:
+          type: number
+        maxGroupSize:
+          type: integer
+        description:
+          type: string
+        imageUrl:
+          type: [string, 'null']
+        status:
+          type: string
+          enum: [active, cancelled, completed]
+        currentParticipants:
+          type: integer
+        difficultyLevel:
+          type: string
+          enum: [easy, moderate, hard, extreme]
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateTrekBody:
+      type: object
+      required: [title, destination, duration, startDate, price, maxGroupSize, description, difficultyLevel]
+      properties:
+        title:
+          type: string
+        destination:
+          type: string
+        duration:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        price:
+          type: number
+        maxGroupSize:
+          type: integer
+        description:
+          type: string
+        imageUrl:
+          type: string
+        difficultyLevel:
+          type: string
+          enum: [easy, moderate, hard, extreme]
+
+    UpdateTrekBody:
+      type: object
+      properties:
+        title:
+          type: string
+        destination:
+          type: string
+        duration:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        price:
+          type: number
+        maxGroupSize:
+          type: integer
+        description:
+          type: string
+        imageUrl:
+          type: string
+        difficultyLevel:
+          type: string
+          enum: [easy, moderate, hard, extreme]
+        status:
+          type: string
+          enum: [active, cancelled, completed]
+
+    JoinRequest:
+      type: object
+      required: [id, trekId, trekkerId, status, createdAt]
+      properties:
+        id:
+          type: string
+        trekId:
+          type: string
+        trekkerId:
+          type: string
+        trekkerName:
+          type: [string, 'null']
+        trekkerEmail:
+          type: [string, 'null']
+        trekkerProfileImage:
+          type: [string, 'null']
+        trek:
+          $ref: '#/components/schemas/Trek'
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        message:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateJoinRequestBody:
+      type: object
+      properties:
+        message:
+          type: string
+
+    UpdateJoinRequestBody:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [accepted, rejected]
+
+    CustomRequest:
+      type: object
+      required: [id, trekkerId, destination, budget, startDate, groupSize, status, createdAt]
+      properties:
+        id:
+          type: string
+        trekkerId:
+          type: string
+        trekkerName:
+          type: [string, 'null']
+        destination:
+          type: string
+        budget:
+          type: number
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: [string, 'null']
+          format: date
+        groupSize:
+          type: integer
+        notes:
+          type: [string, 'null']
+        status:
+          type: string
+          enum: [open, closed, cancelled]
+        bidsCount:
+          type: integer
+        selectedBidId:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateCustomRequestBody:
+      type: object
+      required: [destination, budget, startDate, groupSize]
+      properties:
+        destination:
+          type: string
+        budget:
+          type: number
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        groupSize:
+          type: integer
+        notes:
+          type: string
+
+    Bid:
+      type: object
+      required: [id, customRequestId, agencyId, proposedPrice, planDescription, status, createdAt]
+      properties:
+        id:
+          type: string
+        customRequestId:
+          type: string
+        agencyId:
+          type: string
+        agencyName:
+          type: [string, 'null']
+        agencyProfileImage:
+          type: [string, 'null']
+        proposedPrice:
+          type: number
+        planDescription:
+          type: string
+        message:
+          type: [string, 'null']
+        status:
+          type: string
+          enum: [pending, selected, rejected]
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateBidBody:
+      type: object
+      required: [proposedPrice, planDescription]
+      properties:
+        proposedPrice:
+          type: number
+        planDescription:
+          type: string
+        message:
+          type: string
+
+    Booking:
+      type: object
+      required: [id, trekkerId, totalAmount, advanceAmount, status, createdAt]
+      properties:
+        id:
+          type: string
+        trekkerId:
+          type: string
+        trekId:
+          type: [string, 'null']
+        bidId:
+          type: [string, 'null']
+        trek:
+          $ref: '#/components/schemas/Trek'
+        totalAmount:
+          type: number
+        advanceAmount:
+          type: number
+        status:
+          type: string
+          enum: [pending, paid, cancelled]
+        paymentRef:
+          type: [string, 'null']
+        cancellationPolicy:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateBookingBody:
+      type: object
+      properties:
+        trekId:
+          type: string
+        bidId:
+          type: string
+
+    TrekkerDashboard:
+      type: object
+      required: [joinedTreks, pendingRequests, customRequests, totalSpent, upcomingTreks]
+      properties:
+        joinedTreks:
+          type: array
+          items:
+            $ref: '#/components/schemas/JoinRequest'
+        pendingRequests:
+          type: array
+          items:
+            $ref: '#/components/schemas/JoinRequest'
+        customRequests:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomRequest'
+        totalSpent:
+          type: number
+        upcomingTreks:
+          type: integer
+
+    AgencyDashboard:
+      type: object
+      required: [myTreks, pendingJoinRequests, openCustomRequests, totalEarnings, totalBookings]
+      properties:
+        myTreks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trek'
+        pendingJoinRequests:
+          type: array
+          items:
+            $ref: '#/components/schemas/JoinRequest'
+        openCustomRequests:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomRequest'
+        totalEarnings:
+          type: number
+        totalBookings:
+          type: integer
+
+    DestinationStat:
+      type: object
+      required: [destination, trekCount, avgPrice]
+      properties:
+        destination:
+          type: string
+        trekCount:
+          type: integer
+        avgPrice:
+          type: number
