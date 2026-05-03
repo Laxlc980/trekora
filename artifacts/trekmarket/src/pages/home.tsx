@@ -19,12 +19,14 @@ export default function Home() {
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="relative z-20 container mx-auto px-4 text-center">
-          <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            The Command Center for <br />
-            <span className="text-primary-foreground/90 italic">Himalayan Adventure</span>
+          <p className="text-sm md:text-base font-semibold uppercase tracking-[0.3em] text-white/70 mb-4 animate-in fade-in duration-700">
+            Plan. Connect. Trek.
+          </p>
+          <h1 className="text-6xl md:text-8xl font-serif font-bold text-white mb-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            Trekora
           </h1>
-          <p className="text-lg md:text-2xl text-white/90 max-w-2xl mx-auto mb-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
-            Discover precision-planned treks, connect with verified local agencies, and embark on the journey of a lifetime.
+          <p className="text-lg md:text-xl text-white/85 max-w-2xl mx-auto mb-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
+            A smart platform to discover, plan, and book trekking experiences with guides and fellow trekkers.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
             <Button asChild size="lg" className="text-lg px-8 py-6 h-auto" data-testid="link-hero-browse">

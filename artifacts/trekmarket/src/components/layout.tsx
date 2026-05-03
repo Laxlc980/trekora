@@ -40,7 +40,7 @@ export function RoleSelection() {
       <div className="max-w-2xl w-full space-y-8">
         <div className="text-center space-y-2">
           <Mountain className="w-12 h-12 text-primary mx-auto" />
-          <h1 className="text-4xl font-serif font-bold text-foreground">Welcome to TrekMarket</h1>
+          <h1 className="text-4xl font-serif font-bold text-foreground">Welcome to Trekora</h1>
           <p className="text-muted-foreground text-lg">Choose how you want to use the platform.</p>
         </div>
 
@@ -127,7 +127,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2" data-testid="link-home">
             <Mountain className="w-6 h-6 text-primary" />
-            <span className="font-serif font-bold text-xl tracking-tight">TrekMarket</span>
+            <span className="font-serif font-bold text-xl tracking-tight">Trekora</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
@@ -213,10 +213,10 @@ export function Layout({ children }: { children: ReactNode }) {
           <div className="space-y-4 md:col-span-2">
             <div className="flex items-center gap-2">
               <Mountain className="w-6 h-6 text-primary" />
-              <span className="font-serif font-bold text-xl">TrekMarket</span>
+              <span className="font-serif font-bold text-xl">Trekora</span>
             </div>
             <p className="text-sm text-muted-foreground max-w-xs">
-              The command center for Himalayan adventure. Precise, trustworthy, and alive with the energy of high-altitude exploration.
+              Plan. Connect. Trek. — Your smart platform to discover, plan, and book trekking experiences with guides and fellow trekkers.
             </p>
           </div>
           <div>
