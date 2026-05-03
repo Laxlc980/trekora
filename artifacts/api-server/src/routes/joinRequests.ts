@@ -109,9 +109,14 @@ router.put("/join-requests/:requestId", async (req: Request, res: Response) => {
     res.status(404).json({ error: "Not found" });
     return;
   }
+  // Verify logged-in user owns the trek (agencyId match)
+  if (jr.agencyId !== req.user.id) {
+    res.status(403).json({ error: "Forbidden - not the trek owner" });
+    return;
+  }
   const [trek] = await db.select().from(treksTable).where(eq(treksTable.id, jr.trekId));
-  if (!trek || trek.agencyId !== req.user.id) {
-    res.status(403).json({ error: "Forbidden" });
+  if (!trek) {
+    res.status(404).json({ error: "Trek not found" });
     return;
   }
   const [updated] = await db

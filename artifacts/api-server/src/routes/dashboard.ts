@@ -107,17 +107,18 @@ router.get("/dashboard/agency", async (req: Request, res: Response) => {
     createdAt: t.createdAt.toISOString(),
   }));
 
-  // All join requests for this agency — query by trekIds using inArray
+  // All join requests for this agency — query directly by agencyId (most robust)
   let pendingJoinRequests: Record<string, unknown>[] = [];
   let allJoinRequests: Record<string, unknown>[] = [];
-  const trekIds = myTreks.map((t) => t.id);
 
-  if (trekIds.length > 0) {
-    const allJrRows = await db
-      .select()
-      .from(joinRequestsTable)
-      .where(inArray(joinRequestsTable.trekId, trekIds))
-      .orderBy(desc(joinRequestsTable.createdAt));
+  const allJrRows = await db
+    .select()
+    .from(joinRequestsTable)
+    .where(eq(joinRequestsTable.agencyId, agencyId))
+    .orderBy(desc(joinRequestsTable.createdAt));
+
+  if (allJrRows.length > 0) {
+    const trekIds = myTreks.map((t) => t.id);
 
     const formatJr = async (jr: typeof joinRequestsTable.$inferSelect) => {
       const [trekker] = await db.select().from(usersTable).where(eq(usersTable.id, jr.trekkerId));

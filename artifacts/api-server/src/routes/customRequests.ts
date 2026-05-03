@@ -81,7 +81,31 @@ router.get("/custom-requests/:requestId", async (req: Request, res: Response) =>
     res.status(404).json({ error: "Not found" });
     return;
   }
-  res.json(await formatCustomRequest(cr));
+
+  // Fetch all bids for this custom request (if trekker is viewing)
+  let bidsData: Record<string, unknown>[] = [];
+  if (req.isAuthenticated() && cr.trekkerId === req.user.id) {
+    const bids = await db.select().from(bidsTable).where(eq(bidsTable.customRequestId, cr.id));
+    const formatBid = async (bid: typeof bidsTable.$inferSelect) => {
+      const [agency] = await db.select().from(usersTable).where(eq(usersTable.id, bid.agencyId));
+      return {
+        id: bid.id,
+        customRequestId: bid.customRequestId,
+        agencyId: bid.agencyId,
+        agencyName: agency?.agencyName ?? (`${agency?.firstName ?? ""} ${agency?.lastName ?? ""}`.trim() || null),
+        agencyProfileImage: agency?.profileImageUrl ?? null,
+        proposedPrice: Number(bid.proposedPrice),
+        planDescription: bid.planDescription,
+        message: bid.message ?? null,
+        status: bid.status as "pending" | "selected" | "rejected",
+        createdAt: bid.createdAt.toISOString(),
+      };
+    };
+    bidsData = await Promise.all(bids.map(formatBid));
+  }
+
+  const formatted = await formatCustomRequest(cr);
+  res.json({ ...formatted, bids: bidsData });
 });
 
 export default router;
