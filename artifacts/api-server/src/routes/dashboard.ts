@@ -107,25 +107,19 @@ router.get("/dashboard/agency", async (req: Request, res: Response) => {
     createdAt: t.createdAt.toISOString(),
   }));
 
-  // Pending join requests for this agency — query by agencyId directly (or fallback to trekIds)
+  // All join requests for this agency — query by trekIds using inArray
   let pendingJoinRequests: Record<string, unknown>[] = [];
+  let allJoinRequests: Record<string, unknown>[] = [];
   const trekIds = myTreks.map((t) => t.id);
 
   if (trekIds.length > 0) {
-    // Primary: filter by agencyId column (populated for new requests)
-    // Also include old rows matched by trekId for backward compatibility
-    const jrRows = await db
+    const allJrRows = await db
       .select()
       .from(joinRequestsTable)
-      .where(
-        and(
-          inArray(joinRequestsTable.trekId, trekIds),
-          eq(joinRequestsTable.status, "pending")
-        )
-      )
+      .where(inArray(joinRequestsTable.trekId, trekIds))
       .orderBy(desc(joinRequestsTable.createdAt));
 
-    pendingJoinRequests = await Promise.all(jrRows.map(async (jr) => {
+    const formatJr = async (jr: typeof joinRequestsTable.$inferSelect) => {
       const [trekker] = await db.select().from(usersTable).where(eq(usersTable.id, jr.trekkerId));
       const trek = myTreks.find((t) => t.id === jr.trekId);
       return {
@@ -150,7 +144,10 @@ router.get("/dashboard/agency", async (req: Request, res: Response) => {
         message: jr.message ?? null,
         createdAt: jr.createdAt.toISOString(),
       };
-    }));
+    };
+
+    allJoinRequests = await Promise.all(allJrRows.map(formatJr));
+    pendingJoinRequests = allJoinRequests.filter((jr) => jr.status === "pending");
   }
 
   // Open custom requests visible to all agencies
@@ -204,6 +201,7 @@ router.get("/dashboard/agency", async (req: Request, res: Response) => {
   res.json({
     myTreks: formattedTreks,
     pendingJoinRequests,
+    allJoinRequests,
     openCustomRequests: formattedCRs,
     totalEarnings,
     totalBookings,
