@@ -360,7 +360,8 @@ export async function customFetch<T = unknown>(
 
   const requestInfo = { method, url: resolveUrl(input) };
 
-  const response = await fetch(input, { ...init, method, headers });
+  // Include credentials (cookies) with every request for session-based auth
+  const response = await fetch(input, { ...init, method, headers, credentials: 'include' });
 
   if (!response.ok) {
     const errorData = await parseErrorBody(response, method);
