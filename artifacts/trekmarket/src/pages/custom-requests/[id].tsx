@@ -62,7 +62,7 @@ export default function CustomRequestDetail() {
 
     setIsSubmitting(true);
     createBid.mutate(
-      { id, data: { proposedPrice: Number(proposedPrice), planDescription, message } },
+      { requestId: id, data: { proposedPrice: Number(proposedPrice), planDescription, message } },
       {
         onSuccess: () => {
           toast({ title: "Bid Submitted", description: "Your bid has been sent to the trekker." });
@@ -80,7 +80,7 @@ export default function CustomRequestDetail() {
   const handleSelectBid = (bidId: string) => {
     setIsSelecting(bidId);
     selectBid.mutate(
-      { id, bidId },
+      { bidId },
       {
         onSuccess: () => {
           toast({ title: "Bid Selected", description: "You have selected an agency for your custom request." });

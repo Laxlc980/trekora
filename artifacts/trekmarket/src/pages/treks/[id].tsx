@@ -64,7 +64,7 @@ export default function TrekDetail() {
 
     setIsJoining(true);
     createJoinRequest.mutate(
-      { id, data: { message } },
+      { trekId: id, data: { message } },
       {
         onSuccess: () => {
           toast({
