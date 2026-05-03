@@ -7,6 +7,7 @@ import { Layout } from "@/components/layout";
 import Home from "@/pages/home";
 import TreksList from "@/pages/treks/index";
 import TrekDetail from "@/pages/treks/[id]";
+import AgencyProfile from "@/pages/agency/[id]";
 import CustomRequestsList from "@/pages/custom-requests/index";
 import CustomRequestDetail from "@/pages/custom-requests/[id]";
 import Dashboard from "@/pages/dashboard/index";
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/treks" component={TreksList} />
         <Route path="/treks/:id" component={TrekDetail} />
+        <Route path="/agency/:id" component={AgencyProfile} />
         <Route path="/custom-requests" component={CustomRequestsList} />
         <Route path="/custom-requests/:id" component={CustomRequestDetail} />
         <Route path="/dashboard" component={Dashboard} />

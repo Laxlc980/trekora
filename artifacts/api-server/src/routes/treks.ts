@@ -156,4 +156,28 @@ router.delete("/treks/:trekId", async (req: Request, res: Response) => {
   res.json({ success: true });
 });
 
+router.get("/agencies/:agencyId", async (req: Request, res: Response) => {
+  const [agency] = await db.select().from(usersTable).where(eq(usersTable.id, req.params.agencyId));
+  if (!agency || agency.role !== "agency") {
+    res.status(404).json({ error: "Agency not found" });
+    return;
+  }
+  const agencyTreks = await db
+    .select()
+    .from(treksTable)
+    .where(eq(treksTable.agencyId, req.params.agencyId));
+  res.json({
+    id: agency.id,
+    agencyName: agency.agencyName,
+    firstName: agency.firstName,
+    lastName: agency.lastName,
+    profileImageUrl: agency.profileImageUrl,
+    bio: agency.bio,
+    phone: agency.phone,
+    location: agency.location,
+    createdAt: agency.createdAt.toISOString(),
+    treks: agencyTreks.map((t) => formatTrek(t, agency.agencyName)),
+  });
+});
+
 export default router;

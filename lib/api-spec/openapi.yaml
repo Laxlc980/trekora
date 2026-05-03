@@ -349,6 +349,27 @@ paths:
         '403':
           description: Forbidden
 
+  /agencies/{agencyId}:
+    get:
+      tags: [treks]
+      operationId: getAgencyProfile
+      summary: Get public agency profile and their trek packages
+      parameters:
+        - name: agencyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agency profile with treks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgencyProfile'
+        '404':
+          description: Agency not found
+
   /treks/{trekId}/join-requests:
     get:
       tags: [joinRequests]
@@ -1152,3 +1173,31 @@ components:
           type: integer
         avgPrice:
           type: number
+
+    AgencyProfile:
+      type: object
+      required: [id, agencyName, firstName, lastName, createdAt, treks]
+      properties:
+        id:
+          type: string
+        agencyName:
+          type: [string, 'null']
+        firstName:
+          type: [string, 'null']
+        lastName:
+          type: [string, 'null']
+        profileImageUrl:
+          type: [string, 'null']
+        bio:
+          type: [string, 'null']
+        phone:
+          type: [string, 'null']
+        location:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+        treks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Trek'

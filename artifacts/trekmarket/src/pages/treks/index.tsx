@@ -84,46 +84,61 @@ export default function TreksList() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {treks?.map(trek => (
-            <Link key={trek.id} href={`/treks/${trek.id}`}>
-              <Card className="overflow-hidden h-full hover-elevate transition-all border-border group cursor-pointer">
-                <div className="h-48 relative overflow-hidden">
-                  <img 
-                    src={trek.imageUrl || `/images/trek-${(parseInt(trek.id, 36) % 2) + 1}.png`} 
-                    alt={trek.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute top-3 right-3 bg-background/90 backdrop-blur px-2.5 py-0.5 rounded text-sm font-semibold shadow-sm">
-                    ${trek.price}
-                  </div>
-                </div>
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-1.5 text-xs text-primary font-bold uppercase tracking-wider mb-2">
-                    <MapPin className="w-3.5 h-3.5" />
-                    {trek.destination}
-                  </div>
-                  <h3 className="text-lg font-serif font-bold mb-3 line-clamp-2">{trek.title}</h3>
-                  
-                  <div className="flex flex-col gap-2 text-sm text-muted-foreground mb-4">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      {trek.duration} Days
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4" />
-                      Max {trek.maxGroupSize} ({trek.currentParticipants} joined)
+          {treks?.map(trek => {
+            const navigate = (path: string) => (e: React.MouseEvent) => {
+              e.preventDefault();
+              window.location.href = path;
+            };
+            return (
+              <div key={trek.id} className="cursor-pointer" onClick={navigate(`/treks/${trek.id}`)}>
+                <Card className="overflow-hidden h-full hover-elevate transition-all border-border group">
+                  <div className="h-48 relative overflow-hidden">
+                    <img 
+                      src={trek.imageUrl || `/images/trek-${(parseInt(trek.id, 36) % 2) + 1}.png`} 
+                      alt={trek.title}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute top-3 right-3 bg-background/90 backdrop-blur px-2.5 py-0.5 rounded text-sm font-semibold shadow-sm">
+                      ${trek.price}
                     </div>
                   </div>
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-1.5 text-xs text-primary font-bold uppercase tracking-wider mb-2">
+                      <MapPin className="w-3.5 h-3.5" />
+                      {trek.destination}
+                    </div>
+                    <h3 className="text-lg font-serif font-bold mb-3 line-clamp-2">{trek.title}</h3>
+                    
+                    <div className="flex flex-col gap-2 text-sm text-muted-foreground mb-4">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        {trek.duration} Days
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Max {trek.maxGroupSize} ({trek.currentParticipants} joined)
+                      </div>
+                    </div>
 
-                  <div className="flex items-center justify-between border-t border-border pt-3">
-                    <div className="text-xs font-medium px-2 py-1 bg-secondary/10 text-secondary rounded">
-                      {trek.difficultyLevel}
+                    <div className="flex items-center justify-between border-t border-border pt-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/agency/${trek.agencyId}`)(e);
+                        }}
+                        className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors truncate pr-2"
+                      >
+                        {trek.agencyName}
+                      </button>
+                      <div className="text-xs font-medium px-2 py-1 bg-secondary/10 text-secondary rounded whitespace-nowrap">
+                        {trek.difficultyLevel}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
