@@ -7,6 +7,7 @@ export const joinRequestsTable = pgTable("join_requests", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   trekId: varchar("trek_id").notNull(),
   trekkerId: varchar("trekker_id").notNull(),
+  agencyId: varchar("agency_id"),
   status: varchar("status").notNull().default("pending"),
   message: text("message"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

@@ -77,6 +77,7 @@ router.post("/treks/:trekId/join-requests", async (req: Request, res: Response) 
     .values({
       trekId: req.params.trekId,
       trekkerId: req.user.id,
+      agencyId: trek.agencyId,
       message: parsed.success ? (parsed.data.message ?? null) : null,
       status: "pending",
     })
