@@ -74,10 +74,10 @@ export default function TrekDetail() {
           queryClient.invalidateQueries({ queryKey: getListJoinRequestsQueryKey(id) });
           setIsJoining(false);
         },
-        onError: () => {
+        onError: (err: any) => {
           toast({
             title: "Error",
-            description: "Failed to send request.",
+            description: err?.message ?? "Failed to send request.",
             variant: "destructive"
           });
           setIsJoining(false);

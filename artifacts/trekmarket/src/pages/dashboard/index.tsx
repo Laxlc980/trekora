@@ -77,13 +77,16 @@ function AgencyDashboardView() {
 
   const handleUpdateReq = (id: string, status: "accepted" | "rejected") => {
     setUpdatingId(id);
-    updateJoinReq.mutate({ id, data: { status } }, {
+    updateJoinReq.mutate({ requestId: id, data: { status } }, {
       onSuccess: () => {
         toast({ title: status === "accepted" ? "Request approved!" : "Request declined" });
         queryClient.invalidateQueries({ queryKey: getGetAgencyDashboardQueryKey() });
         setUpdatingId(null);
       },
-      onError: () => setUpdatingId(null),
+      onError: (err: any) => {
+        toast({ title: "Error", description: err?.message ?? "Failed to update request.", variant: "destructive" });
+        setUpdatingId(null);
+      },
     });
   };
 
@@ -108,7 +111,10 @@ function AgencyDashboardView() {
         queryClient.invalidateQueries({ queryKey: getGetAgencyDashboardQueryKey() });
         setIsCreatingTrek(false);
       },
-      onError: () => setIsCreatingTrek(false)
+      onError: (err: any) => {
+        toast({ title: "Error", description: err?.message ?? "Failed to create trek.", variant: "destructive" });
+        setIsCreatingTrek(false);
+      }
     });
   };
 
@@ -390,6 +396,9 @@ function TrekkerDashboardView() {
   const createBooking = useCreateBooking();
   const createReq = useCreateCustomRequest();
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get("tab") === "new" ? "new" : "requests";
+
   const [isCreatingReq, setIsCreatingReq] = useState(false);
   const [isBooking, setIsBooking] = useState<string | null>(null);
   const [newReq, setNewReq] = useState({
@@ -420,12 +429,15 @@ function TrekkerDashboardView() {
       }
     }, {
       onSuccess: () => {
-        toast({ title: "Custom request submitted!" });
+        toast({ title: "Custom request submitted!", description: "Agencies can now view and bid on your request." });
         setNewReq({ destination: "", budget: "", startDate: "", groupSize: "", notes: "" });
         queryClient.invalidateQueries({ queryKey: getGetTrekkerDashboardQueryKey() });
         setIsCreatingReq(false);
       },
-      onError: () => setIsCreatingReq(false)
+      onError: (err: any) => {
+        toast({ title: "Error", description: err?.message ?? "Failed to submit request.", variant: "destructive" });
+        setIsCreatingReq(false);
+      }
     });
   };
 
@@ -456,7 +468,7 @@ function TrekkerDashboardView() {
         </Card>
       </div>
 
-      <Tabs defaultValue="requests" className="w-full">
+      <Tabs defaultValue={initialTab} className="w-full">
         <TabsList className="mb-4 flex-wrap h-auto gap-1">
           <TabsTrigger value="requests">
             Join Requests

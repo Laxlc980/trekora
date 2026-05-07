@@ -69,8 +69,8 @@ export default function CustomRequestDetail() {
           queryClient.invalidateQueries({ queryKey: getListBidsQueryKey(id) });
           setIsSubmitting(false);
         },
-        onError: () => {
-          toast({ title: "Error", description: "Failed to submit bid.", variant: "destructive" });
+        onError: (err: any) => {
+          toast({ title: "Error", description: err?.message ?? "Failed to submit bid.", variant: "destructive" });
           setIsSubmitting(false);
         }
       }
@@ -88,8 +88,8 @@ export default function CustomRequestDetail() {
           queryClient.invalidateQueries({ queryKey: getListBidsQueryKey(id) });
           setIsSelecting(null);
         },
-        onError: () => {
-          toast({ title: "Error", description: "Failed to select bid.", variant: "destructive" });
+        onError: (err: any) => {
+          toast({ title: "Error", description: err?.message ?? "Failed to select bid.", variant: "destructive" });
           setIsSelecting(null);
         }
       }

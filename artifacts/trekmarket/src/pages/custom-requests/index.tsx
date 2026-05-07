@@ -23,7 +23,7 @@ export default function CustomRequestsList() {
         </div>
         {isTrekker && (
           <Button asChild size="lg">
-            <Link href="/dashboard">Create Request</Link>
+            <Link href="/dashboard?tab=new">Request Custom Trip</Link>
           </Button>
         )}
       </div>
