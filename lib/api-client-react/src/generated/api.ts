@@ -18,6 +18,7 @@ import type {
 
 import type {
   AgencyDashboard,
+  AgencyProfile,
   AuthUserEnvelope,
   BeginBrowserLoginParams,
   Bid,
@@ -26,6 +27,8 @@ import type {
   CreateBookingBody,
   CreateCustomRequestBody,
   CreateJoinRequestBody,
+  CreateReplyBody,
+  CreateThreadBody,
   CreateTrekBody,
   CustomRequest,
   DestinationStat,
@@ -37,8 +40,12 @@ import type {
   LogoutSuccess,
   MobileTokenExchangeRequest,
   MobileTokenExchangeSuccess,
+  Notification,
   SetRoleBody,
   SuccessResponse,
+  Thread,
+  ThreadReply,
+  ThreadWithReplies,
   Trek,
   TrekkerDashboard,
   UpdateJoinRequestBody,
@@ -1406,6 +1413,94 @@ export const useDeleteTrek = <
 };
 
 /**
+ * @summary Get public agency profile and their trek packages
+ */
+export const getGetAgencyProfileUrl = (agencyId: string) => {
+  return `/api/agencies/${agencyId}`;
+};
+
+export const getAgencyProfile = async (
+  agencyId: string,
+  options?: RequestInit,
+): Promise<AgencyProfile> => {
+  return customFetch<AgencyProfile>(getGetAgencyProfileUrl(agencyId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetAgencyProfileQueryKey = (agencyId: string) => {
+  return [`/api/agencies/${agencyId}`] as const;
+};
+
+export const getGetAgencyProfileQueryOptions = <
+  TData = Awaited<ReturnType<typeof getAgencyProfile>>,
+  TError = ErrorType<void>,
+>(
+  agencyId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAgencyProfile>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetAgencyProfileQueryKey(agencyId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getAgencyProfile>>
+  > = ({ signal }) => getAgencyProfile(agencyId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!agencyId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getAgencyProfile>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetAgencyProfileQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getAgencyProfile>>
+>;
+export type GetAgencyProfileQueryError = ErrorType<void>;
+
+/**
+ * @summary Get public agency profile and their trek packages
+ */
+
+export function useGetAgencyProfile<
+  TData = Awaited<ReturnType<typeof getAgencyProfile>>,
+  TError = ErrorType<void>,
+>(
+  agencyId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getAgencyProfile>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetAgencyProfileQueryOptions(agencyId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary List join requests for a trek (agency only)
  */
 export const getListJoinRequestsUrl = (trekId: string) => {
@@ -2742,6 +2837,577 @@ export function useGetAgencyDashboard<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Get current user's notifications
+ */
+export const getListNotificationsUrl = () => {
+  return `/api/notifications`;
+};
+
+export const listNotifications = async (
+  options?: RequestInit,
+): Promise<Notification[]> => {
+  return customFetch<Notification[]>(getListNotificationsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListNotificationsQueryKey = () => {
+  return [`/api/notifications`] as const;
+};
+
+export const getListNotificationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listNotifications>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listNotifications>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListNotificationsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listNotifications>>
+  > = ({ signal }) => listNotifications({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listNotifications>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListNotificationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listNotifications>>
+>;
+export type ListNotificationsQueryError = ErrorType<void>;
+
+/**
+ * @summary Get current user's notifications
+ */
+
+export function useListNotifications<
+  TData = Awaited<ReturnType<typeof listNotifications>>,
+  TError = ErrorType<void>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listNotifications>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListNotificationsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Mark all notifications as read
+ */
+export const getMarkAllNotificationsReadUrl = () => {
+  return `/api/notifications/read-all`;
+};
+
+export const markAllNotificationsRead = async (
+  options?: RequestInit,
+): Promise<SuccessResponse> => {
+  return customFetch<SuccessResponse>(getMarkAllNotificationsReadUrl(), {
+    ...options,
+    method: "PATCH",
+  });
+};
+
+export const getMarkAllNotificationsReadMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markAllNotificationsRead>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof markAllNotificationsRead>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["markAllNotificationsRead"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof markAllNotificationsRead>>,
+    void
+  > = () => {
+    return markAllNotificationsRead(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MarkAllNotificationsReadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof markAllNotificationsRead>>
+>;
+
+export type MarkAllNotificationsReadMutationError = ErrorType<void>;
+
+/**
+ * @summary Mark all notifications as read
+ */
+export const useMarkAllNotificationsRead = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markAllNotificationsRead>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof markAllNotificationsRead>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getMarkAllNotificationsReadMutationOptions(options));
+};
+
+/**
+ * @summary Mark a notification as read
+ */
+export const getMarkNotificationReadUrl = (notificationId: string) => {
+  return `/api/notifications/${notificationId}/read`;
+};
+
+export const markNotificationRead = async (
+  notificationId: string,
+  options?: RequestInit,
+): Promise<Notification> => {
+  return customFetch<Notification>(getMarkNotificationReadUrl(notificationId), {
+    ...options,
+    method: "PATCH",
+  });
+};
+
+export const getMarkNotificationReadMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markNotificationRead>>,
+    TError,
+    { notificationId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof markNotificationRead>>,
+  TError,
+  { notificationId: string },
+  TContext
+> => {
+  const mutationKey = ["markNotificationRead"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof markNotificationRead>>,
+    { notificationId: string }
+  > = (props) => {
+    const { notificationId } = props ?? {};
+
+    return markNotificationRead(notificationId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type MarkNotificationReadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof markNotificationRead>>
+>;
+
+export type MarkNotificationReadMutationError = ErrorType<void>;
+
+/**
+ * @summary Mark a notification as read
+ */
+export const useMarkNotificationRead = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof markNotificationRead>>,
+    TError,
+    { notificationId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof markNotificationRead>>,
+  TError,
+  { notificationId: string },
+  TContext
+> => {
+  return useMutation(getMarkNotificationReadMutationOptions(options));
+};
+
+/**
+ * @summary List community discussion threads
+ */
+export const getListThreadsUrl = () => {
+  return `/api/threads`;
+};
+
+export const listThreads = async (options?: RequestInit): Promise<Thread[]> => {
+  return customFetch<Thread[]>(getListThreadsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListThreadsQueryKey = () => {
+  return [`/api/threads`] as const;
+};
+
+export const getListThreadsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listThreads>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listThreads>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListThreadsQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listThreads>>> = ({
+    signal,
+  }) => listThreads({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listThreads>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListThreadsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listThreads>>
+>;
+export type ListThreadsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List community discussion threads
+ */
+
+export function useListThreads<
+  TData = Awaited<ReturnType<typeof listThreads>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listThreads>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListThreadsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create a discussion thread (trekker only)
+ */
+export const getCreateThreadUrl = () => {
+  return `/api/threads`;
+};
+
+export const createThread = async (
+  createThreadBody: CreateThreadBody,
+  options?: RequestInit,
+): Promise<Thread> => {
+  return customFetch<Thread>(getCreateThreadUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createThreadBody),
+  });
+};
+
+export const getCreateThreadMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createThread>>,
+    TError,
+    { data: BodyType<CreateThreadBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createThread>>,
+  TError,
+  { data: BodyType<CreateThreadBody> },
+  TContext
+> => {
+  const mutationKey = ["createThread"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createThread>>,
+    { data: BodyType<CreateThreadBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createThread(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateThreadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createThread>>
+>;
+export type CreateThreadMutationBody = BodyType<CreateThreadBody>;
+export type CreateThreadMutationError = ErrorType<void>;
+
+/**
+ * @summary Create a discussion thread (trekker only)
+ */
+export const useCreateThread = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createThread>>,
+    TError,
+    { data: BodyType<CreateThreadBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createThread>>,
+  TError,
+  { data: BodyType<CreateThreadBody> },
+  TContext
+> => {
+  return useMutation(getCreateThreadMutationOptions(options));
+};
+
+/**
+ * @summary Get a thread with its replies
+ */
+export const getGetThreadUrl = (threadId: string) => {
+  return `/api/threads/${threadId}`;
+};
+
+export const getThread = async (
+  threadId: string,
+  options?: RequestInit,
+): Promise<ThreadWithReplies> => {
+  return customFetch<ThreadWithReplies>(getGetThreadUrl(threadId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetThreadQueryKey = (threadId: string) => {
+  return [`/api/threads/${threadId}`] as const;
+};
+
+export const getGetThreadQueryOptions = <
+  TData = Awaited<ReturnType<typeof getThread>>,
+  TError = ErrorType<void>,
+>(
+  threadId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getThread>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetThreadQueryKey(threadId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getThread>>> = ({
+    signal,
+  }) => getThread(threadId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!threadId,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getThread>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetThreadQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getThread>>
+>;
+export type GetThreadQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a thread with its replies
+ */
+
+export function useGetThread<
+  TData = Awaited<ReturnType<typeof getThread>>,
+  TError = ErrorType<void>,
+>(
+  threadId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getThread>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetThreadQueryOptions(threadId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Add a reply to a thread (any logged-in user)
+ */
+export const getCreateReplyUrl = (threadId: string) => {
+  return `/api/threads/${threadId}/replies`;
+};
+
+export const createReply = async (
+  threadId: string,
+  createReplyBody: CreateReplyBody,
+  options?: RequestInit,
+): Promise<ThreadReply> => {
+  return customFetch<ThreadReply>(getCreateReplyUrl(threadId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createReplyBody),
+  });
+};
+
+export const getCreateReplyMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createReply>>,
+    TError,
+    { threadId: string; data: BodyType<CreateReplyBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createReply>>,
+  TError,
+  { threadId: string; data: BodyType<CreateReplyBody> },
+  TContext
+> => {
+  const mutationKey = ["createReply"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createReply>>,
+    { threadId: string; data: BodyType<CreateReplyBody> }
+  > = (props) => {
+    const { threadId, data } = props ?? {};
+
+    return createReply(threadId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateReplyMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createReply>>
+>;
+export type CreateReplyMutationBody = BodyType<CreateReplyBody>;
+export type CreateReplyMutationError = ErrorType<void>;
+
+/**
+ * @summary Add a reply to a thread (any logged-in user)
+ */
+export const useCreateReply = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createReply>>,
+    TError,
+    { threadId: string; data: BodyType<CreateReplyBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createReply>>,
+  TError,
+  { threadId: string; data: BodyType<CreateReplyBody> },
+  TContext
+> => {
+  return useMutation(getCreateReplyMutationOptions(options));
+};
 
 /**
  * @summary Get popular trek destinations with counts

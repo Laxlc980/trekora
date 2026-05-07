@@ -372,6 +372,100 @@ export interface DestinationStat {
   avgPrice: number;
 }
 
+export interface AgencyProfile {
+  id: string;
+  /** @nullable */
+  agencyName: string | null;
+  /** @nullable */
+  firstName: string | null;
+  /** @nullable */
+  lastName: string | null;
+  /** @nullable */
+  profileImageUrl?: string | null;
+  /** @nullable */
+  bio?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  location?: string | null;
+  createdAt: string;
+  treks: Trek[];
+}
+
+export type NotificationType =
+  (typeof NotificationType)[keyof typeof NotificationType];
+
+export const NotificationType = {
+  join_accepted: "join_accepted",
+  join_rejected: "join_rejected",
+  bid_received: "bid_received",
+  bid_selected: "bid_selected",
+} as const;
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface Thread {
+  id: string;
+  title: string;
+  body: string;
+  authorId: string;
+  /** @nullable */
+  authorName: string | null;
+  /** @nullable */
+  authorRole: string | null;
+  replyCount: number;
+  createdAt: string;
+}
+
+export interface ThreadReply {
+  id: string;
+  threadId: string;
+  body: string;
+  authorId: string;
+  /** @nullable */
+  authorName: string | null;
+  /** @nullable */
+  authorRole: string | null;
+  createdAt: string;
+}
+
+export interface ThreadWithReplies {
+  id: string;
+  title: string;
+  body: string;
+  authorId: string;
+  /** @nullable */
+  authorName: string | null;
+  /** @nullable */
+  authorRole: string | null;
+  replyCount: number;
+  createdAt: string;
+  replies: ThreadReply[];
+}
+
+export interface CreateThreadBody {
+  /**
+   * @minLength 3
+   * @maxLength 200
+   */
+  title: string;
+  /** @minLength 10 */
+  body: string;
+}
+
+export interface CreateReplyBody {
+  /** @minLength 1 */
+  body: string;
+}
+
 /**
  * Opaque session token — `Bearer <sid>`.
  */

@@ -311,6 +311,45 @@ export const DeleteTrekResponse = zod.object({
 });
 
 /**
+ * @summary Get public agency profile and their trek packages
+ */
+export const GetAgencyProfileParams = zod.object({
+  agencyId: zod.coerce.string(),
+});
+
+export const GetAgencyProfileResponse = zod.object({
+  id: zod.string(),
+  agencyName: zod.string().nullable(),
+  firstName: zod.string().nullable(),
+  lastName: zod.string().nullable(),
+  profileImageUrl: zod.string().nullish(),
+  bio: zod.string().nullish(),
+  phone: zod.string().nullish(),
+  location: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+  treks: zod.array(
+    zod.object({
+      id: zod.string(),
+      agencyId: zod.string(),
+      agencyName: zod.string().nullish(),
+      title: zod.string(),
+      destination: zod.string(),
+      duration: zod.number().describe("Duration in days"),
+      startDate: zod.coerce.date(),
+      endDate: zod.coerce.date().nullish(),
+      price: zod.number(),
+      maxGroupSize: zod.number(),
+      description: zod.string(),
+      imageUrl: zod.string().nullish(),
+      status: zod.enum(["active", "cancelled", "completed"]),
+      currentParticipants: zod.number(),
+      difficultyLevel: zod.enum(["easy", "moderate", "hard", "extreme"]),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
  * @summary List join requests for a trek (agency only)
  */
 export const ListJoinRequestsParams = zod.object({
@@ -846,6 +885,127 @@ export const GetAgencyDashboardResponse = zod.object({
   ),
   totalEarnings: zod.number(),
   totalBookings: zod.number(),
+});
+
+/**
+ * @summary Get current user's notifications
+ */
+export const ListNotificationsResponseItem = zod.object({
+  id: zod.string(),
+  userId: zod.string(),
+  title: zod.string(),
+  message: zod.string(),
+  type: zod.enum([
+    "join_accepted",
+    "join_rejected",
+    "bid_received",
+    "bid_selected",
+  ]),
+  read: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+export const ListNotificationsResponse = zod.array(
+  ListNotificationsResponseItem,
+);
+
+/**
+ * @summary Mark all notifications as read
+ */
+export const MarkAllNotificationsReadResponse = zod.object({
+  success: zod.boolean(),
+});
+
+/**
+ * @summary Mark a notification as read
+ */
+export const MarkNotificationReadParams = zod.object({
+  notificationId: zod.coerce.string(),
+});
+
+export const MarkNotificationReadResponse = zod.object({
+  id: zod.string(),
+  userId: zod.string(),
+  title: zod.string(),
+  message: zod.string(),
+  type: zod.enum([
+    "join_accepted",
+    "join_rejected",
+    "bid_received",
+    "bid_selected",
+  ]),
+  read: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary List community discussion threads
+ */
+export const ListThreadsResponseItem = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  body: zod.string(),
+  authorId: zod.string(),
+  authorName: zod.string().nullable(),
+  authorRole: zod.string().nullable(),
+  replyCount: zod.number(),
+  createdAt: zod.coerce.date(),
+});
+export const ListThreadsResponse = zod.array(ListThreadsResponseItem);
+
+/**
+ * @summary Create a discussion thread (trekker only)
+ */
+export const createThreadBodyTitleMin = 3;
+export const createThreadBodyTitleMax = 200;
+
+export const createThreadBodyBodyMin = 10;
+
+export const CreateThreadBody = zod.object({
+  title: zod
+    .string()
+    .min(createThreadBodyTitleMin)
+    .max(createThreadBodyTitleMax),
+  body: zod.string().min(createThreadBodyBodyMin),
+});
+
+/**
+ * @summary Get a thread with its replies
+ */
+export const GetThreadParams = zod.object({
+  threadId: zod.coerce.string(),
+});
+
+export const GetThreadResponse = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  body: zod.string(),
+  authorId: zod.string(),
+  authorName: zod.string().nullable(),
+  authorRole: zod.string().nullable(),
+  replyCount: zod.number(),
+  createdAt: zod.coerce.date(),
+  replies: zod.array(
+    zod.object({
+      id: zod.string(),
+      threadId: zod.string(),
+      body: zod.string(),
+      authorId: zod.string(),
+      authorName: zod.string().nullable(),
+      authorRole: zod.string().nullable(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+});
+
+/**
+ * @summary Add a reply to a thread (any logged-in user)
+ */
+export const CreateReplyParams = zod.object({
+  threadId: zod.coerce.string(),
+});
+
+export const CreateReplyBody = zod.object({
+  body: zod.string().min(1),
 });
 
 /**

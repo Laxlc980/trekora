@@ -8,6 +8,8 @@ import customRequestsRouter from "./customRequests";
 import bidsRouter from "./bids";
 import bookingsRouter from "./bookings";
 import dashboardRouter from "./dashboard";
+import notificationsRouter from "./notifications";
+import threadsRouter from "./threads";
 
 const router: IRouter = Router();
 
@@ -20,5 +22,7 @@ router.use(customRequestsRouter);
 router.use(bidsRouter);
 router.use(bookingsRouter);
 router.use(dashboardRouter);
+router.use(notificationsRouter);
+router.use(threadsRouter);
 
 export default router;

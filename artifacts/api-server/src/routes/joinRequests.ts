@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, joinRequestsTable, treksTable, usersTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { CreateJoinRequestBody, UpdateJoinRequestBody } from "@workspace/api-zod";
+import { createNotification } from "../lib/notify";
 
 const router: IRouter = Router();
 
@@ -109,7 +110,6 @@ router.put("/join-requests/:requestId", async (req: Request, res: Response) => {
     res.status(404).json({ error: "Not found" });
     return;
   }
-  // Verify logged-in user owns the trek (agencyId match)
   if (jr.agencyId !== req.user.id) {
     res.status(403).json({ error: "Forbidden - not the trek owner" });
     return;
@@ -130,6 +130,19 @@ router.put("/join-requests/:requestId", async (req: Request, res: Response) => {
       .update(treksTable)
       .set({ currentParticipants: trek.currentParticipants + 1, updatedAt: new Date() })
       .where(eq(treksTable.id, jr.trekId));
+    createNotification({
+      userId: jr.trekkerId,
+      title: "Join Request Accepted!",
+      message: `Your request to join "${trek.title}" to ${trek.destination} has been accepted. Get ready to trek!`,
+      type: "join_accepted",
+    }).catch(() => {});
+  } else if (parsed.data.status === "rejected") {
+    createNotification({
+      userId: jr.trekkerId,
+      title: "Join Request Update",
+      message: `Your request to join "${trek.title}" to ${trek.destination} was not accepted this time.`,
+      type: "join_rejected",
+    }).catch(() => {});
   }
 
   res.json(await formatJoinRequest(updated));

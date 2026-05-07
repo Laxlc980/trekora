@@ -13,6 +13,8 @@ import CustomRequestDetail from "@/pages/custom-requests/[id]";
 import Dashboard from "@/pages/dashboard/index";
 import BookingConfirmation from "@/pages/bookings/[id]";
 import Profile from "@/pages/profile/index";
+import CommunityList from "@/pages/community/index";
+import CommunityThread from "@/pages/community/[id]";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,8 @@ function Router() {
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/bookings/:id" component={BookingConfirmation} />
         <Route path="/profile" component={Profile} />
+        <Route path="/community" component={CommunityList} />
+        <Route path="/community/:id" component={CommunityThread} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

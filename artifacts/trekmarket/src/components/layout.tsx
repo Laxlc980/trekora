@@ -10,7 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Mountain, Loader2, MapPin, Search, Compass, Tent } from "lucide-react";
+import { Mountain, Loader2, Compass, Tent } from "lucide-react";
+import { NotificationBell } from "@/components/notification-bell";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useState } from "react";
@@ -149,9 +150,19 @@ export function Layout({ children }: { children: ReactNode }) {
             >
               Custom Requests
             </Link>
+            <Link
+              href="/community"
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                location.startsWith("/community") ? "text-primary" : "text-muted-foreground"
+              }`}
+              data-testid="link-nav-community"
+            >
+              Community
+            </Link>
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <NotificationBell />
             {!isAuthenticated ? (
               <Button onClick={login} data-testid="button-login">
                 Log In
@@ -224,6 +235,7 @@ export function Layout({ children }: { children: ReactNode }) {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/treks" className="hover:text-primary transition-colors">Browse Treks</Link></li>
               <li><Link href="/custom-requests" className="hover:text-primary transition-colors">Custom Requests</Link></li>
+              <li><Link href="/community" className="hover:text-primary transition-colors">Community</Link></li>
             </ul>
           </div>
         </div>

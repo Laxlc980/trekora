@@ -25,6 +25,10 @@ tags:
     description: Booking and payment management
   - name: dashboard
     description: Dashboard data
+  - name: notifications
+    description: User notifications
+  - name: community
+    description: Community discussion threads
 paths:
   /healthz:
     get:
@@ -684,6 +688,145 @@ paths:
         '401':
           description: Unauthorized
 
+  /notifications:
+    get:
+      tags: [notifications]
+      operationId: listNotifications
+      summary: Get current user's notifications
+      responses:
+        '200':
+          description: Notifications list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+        '401':
+          description: Unauthorized
+
+  /notifications/read-all:
+    patch:
+      tags: [notifications]
+      operationId: markAllNotificationsRead
+      summary: Mark all notifications as read
+      responses:
+        '200':
+          description: All marked read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          description: Unauthorized
+
+  /notifications/{notificationId}/read:
+    patch:
+      tags: [notifications]
+      operationId: markNotificationRead
+      summary: Mark a notification as read
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification marked read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '401':
+          description: Unauthorized
+
+  /threads:
+    get:
+      tags: [community]
+      operationId: listThreads
+      summary: List community discussion threads
+      responses:
+        '200':
+          description: Threads list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Thread'
+    post:
+      tags: [community]
+      operationId: createThread
+      summary: Create a discussion thread (trekker only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateThreadBody'
+      responses:
+        '201':
+          description: Thread created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thread'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only trekkers can start discussions
+
+  /threads/{threadId}:
+    get:
+      tags: [community]
+      operationId: getThread
+      summary: Get a thread with its replies
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Thread with replies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadWithReplies'
+        '404':
+          description: Not found
+
+  /threads/{threadId}/replies:
+    post:
+      tags: [community]
+      operationId: createReply
+      summary: Add a reply to a thread (any logged-in user)
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReplyBody'
+      responses:
+        '201':
+          description: Reply created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadReply'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Thread not found
+
   /destinations/popular:
     get:
       tags: [treks]
@@ -1201,3 +1344,112 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Trek'
+
+    Notification:
+      type: object
+      required: [id, userId, title, message, type, read, createdAt]
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum: [join_accepted, join_rejected, bid_received, bid_selected]
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Thread:
+      type: object
+      required: [id, title, body, authorId, authorName, authorRole, replyCount, createdAt]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        authorId:
+          type: string
+        authorName:
+          type: [string, 'null']
+        authorRole:
+          type: [string, 'null']
+        replyCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    ThreadReply:
+      type: object
+      required: [id, threadId, body, authorId, authorName, authorRole, createdAt]
+      properties:
+        id:
+          type: string
+        threadId:
+          type: string
+        body:
+          type: string
+        authorId:
+          type: string
+        authorName:
+          type: [string, 'null']
+        authorRole:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+
+    ThreadWithReplies:
+      type: object
+      required: [id, title, body, authorId, authorName, authorRole, replyCount, createdAt, replies]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        authorId:
+          type: string
+        authorName:
+          type: [string, 'null']
+        authorRole:
+          type: [string, 'null']
+        replyCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        replies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ThreadReply'
+
+    CreateThreadBody:
+      type: object
+      required: [title, body]
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 200
+        body:
+          type: string
+          minLength: 10
+
+    CreateReplyBody:
+      type: object
+      required: [body]
+      properties:
+        body:
+          type: string
+          minLength: 1

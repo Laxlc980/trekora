@@ -7,6 +7,7 @@
  */
 
 export * from "./agencyDashboard";
+export * from "./agencyProfile";
 export * from "./authorizationSessionHeaderParameter";
 export * from "./authUser";
 export * from "./authUserEnvelope";
@@ -19,6 +20,8 @@ export * from "./createBidBody";
 export * from "./createBookingBody";
 export * from "./createCustomRequestBody";
 export * from "./createJoinRequestBody";
+export * from "./createReplyBody";
+export * from "./createThreadBody";
 export * from "./createTrekBody";
 export * from "./createTrekBodyDifficultyLevel";
 export * from "./customRequest";
@@ -33,9 +36,14 @@ export * from "./listTreksParams";
 export * from "./logoutSuccess";
 export * from "./mobileTokenExchangeRequest";
 export * from "./mobileTokenExchangeSuccess";
+export * from "./notification";
+export * from "./notificationType";
 export * from "./setRoleBody";
 export * from "./setRoleBodyRole";
 export * from "./successResponse";
+export * from "./thread";
+export * from "./threadReply";
+export * from "./threadWithReplies";
 export * from "./trek";
 export * from "./trekDifficultyLevel";
 export * from "./trekkerDashboard";

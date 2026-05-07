@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, bidsTable, customRequestsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { CreateBidBody } from "@workspace/api-zod";
+import { createNotification } from "../lib/notify";
 
 const router: IRouter = Router();
 
@@ -58,6 +59,15 @@ router.post("/custom-requests/:requestId/bids", async (req: Request, res: Respon
       status: "pending",
     })
     .returning();
+
+  const agencyDisplayName = (user.agencyName ?? (`${user.firstName ?? ""} ${user.lastName ?? ""}`.trim())) || "An agency";
+  createNotification({
+    userId: cr.trekkerId,
+    title: "New Bid on Your Request",
+    message: `${agencyDisplayName} placed a bid of $${parsed.data.proposedPrice} on your trip to ${cr.destination}. View it in your dashboard.`,
+    type: "bid_received",
+  }).catch(() => {});
+
   res.status(201).json(await formatBid(bid));
 });
 
@@ -85,6 +95,14 @@ router.post("/bids/:bidId/select", async (req: Request, res: Response) => {
     .update(customRequestsTable)
     .set({ status: "closed", selectedBidId: req.params.bidId, updatedAt: new Date() })
     .where(eq(customRequestsTable.id, bid.customRequestId));
+
+  createNotification({
+    userId: bid.agencyId,
+    title: "Your Bid Was Selected!",
+    message: `A trekker has selected your bid for the trip to ${cr.destination}. Check your dashboard for next steps.`,
+    type: "bid_selected",
+  }).catch(() => {});
+
   res.json(await formatBid(selectedBid));
 });
 
