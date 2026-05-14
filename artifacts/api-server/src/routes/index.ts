@@ -10,6 +10,17 @@ import bookingsRouter from "./bookings";
 import dashboardRouter from "./dashboard";
 import notificationsRouter from "./notifications";
 import threadsRouter from "./threads";
+import dmRouter from "./dm";
+import weatherRouter from "./weather";
+import permitsRouter from "./permits";
+import emergencyContactsRouter from "./emergencyContacts";
+import gearRouter from "./gear";
+import seasonsRouter from "./seasons";
+import teahousesRouter from "./teahouses";
+import reviewsRouter from "./reviews";
+import verificationRouter from "./verification";
+import sosRouter from "./sos";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -24,5 +35,16 @@ router.use(bookingsRouter);
 router.use(dashboardRouter);
 router.use(notificationsRouter);
 router.use(threadsRouter);
+router.use(dmRouter);
+router.use(weatherRouter);
+router.use(permitsRouter);
+router.use(emergencyContactsRouter);
+router.use(gearRouter);
+router.use(seasonsRouter);
+router.use(teahousesRouter);
+router.use(reviewsRouter);
+router.use(verificationRouter);
+router.use(sosRouter);
+router.use(adminRouter);
 
 export default router;

@@ -9,5 +9,6 @@ import type { SetRoleBodyRole } from "./setRoleBodyRole";
 
 export interface SetRoleBody {
   role: SetRoleBodyRole;
+  username: string;
   agencyName?: string;
 }

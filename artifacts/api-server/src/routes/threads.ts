@@ -1,23 +1,40 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, discussionThreadsTable, threadRepliesTable, usersTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql, count } from "drizzle-orm";
 
 const router: IRouter = Router();
 
-function displayName(u: { firstName: string | null; lastName: string | null; email: string | null; agencyName: string | null } | undefined, role: string | null | undefined) {
-  if (!u) return null;
-  if (role === "agency" && u.agencyName) return u.agencyName;
-  return `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email || null;
+function parsePagination(query: Record<string, unknown>): { page: number; limit: number; offset: number } {
+  const page = Math.max(1, parseInt(String(query.page ?? "1"), 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(String(query.limit ?? "20"), 10) || 20));
+  return { page, limit, offset: (page - 1) * limit };
 }
 
-router.get("/threads", async (_req: Request, res: Response) => {
+function displayName(u: { username: string | null; firstName: string | null; lastName: string | null; email: string | null; agencyName: string | null } | undefined, role: string | null | undefined) {
+  if (!u) return null;
+  // Username is the canonical public identity — never fall back to email
+  if (u.username) return `@${u.username}`;
+  if (role === "agency" && u.agencyName) return u.agencyName;
+  const fullName = `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+  return fullName || null;
+}
+
+router.get("/threads", async (req: Request, res: Response) => {
+  const { page, limit, offset } = parsePagination(req.query);
+
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(discussionThreadsTable);
+
   const threads = await db
     .select()
     .from(discussionThreadsTable)
     .orderBy(desc(discussionThreadsTable.createdAt))
-    .limit(100);
-  res.json(
-    threads.map((t) => ({
+    .limit(limit)
+    .offset(offset);
+
+  res.json({
+    data: threads.map((t) => ({
       id: t.id,
       title: t.title,
       body: t.body,
@@ -27,7 +44,8 @@ router.get("/threads", async (_req: Request, res: Response) => {
       replyCount: t.replyCount,
       createdAt: t.createdAt.toISOString(),
     })),
-  );
+    pagination: { page, limit, total, hasMore: offset + threads.length < total },
+  });
 });
 
 router.post("/threads", async (req: Request, res: Response) => {
@@ -136,7 +154,7 @@ router.post("/threads/:threadId/replies", async (req: Request, res: Response) =>
     .returning();
   await db
     .update(discussionThreadsTable)
-    .set({ replyCount: thread.replyCount + 1, updatedAt: new Date() })
+    .set({ replyCount: sql`reply_count + 1`, updatedAt: new Date() })
     .where(eq(discussionThreadsTable.id, req.params.threadId));
   res.status(201).json({
     id: reply.id,

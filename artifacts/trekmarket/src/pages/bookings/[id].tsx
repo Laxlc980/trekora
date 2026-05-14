@@ -2,7 +2,7 @@ import { useParams, Link } from "wouter";
 import { useGetBooking, getGetBookingQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2, ShieldCheck, MapPin, Calendar, CreditCard } from "lucide-react";
+import { Loader2, CheckCircle2, ShieldCheck, MapPin, Calendar, CreditCard, Mountain, AlertTriangle } from "lucide-react";
 
 export default function BookingConfirmation() {
   const params = useParams();
@@ -83,10 +83,26 @@ export default function BookingConfirmation() {
               {booking.cancellationPolicy || "Free cancellation up to 30 days before the start date. Advance payment is non-refundable if cancelled within 30 days of the trek."}
             </p>
           </div>
+
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-50 border border-amber-200 dark:bg-amber-950/20 dark:border-amber-800">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Emergency Contacts</p>
+              <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                Make sure your emergency contacts are up to date before your trek.{" "}
+                <Link href="/profile" className="underline font-medium hover:text-amber-900">Update now →</Link>
+              </p>
+            </div>
+          </div>
         </CardContent>
         <CardFooter className="bg-muted/30 p-6 flex flex-col sm:flex-row gap-4 border-t border-border">
           <Button asChild className="w-full sm:w-auto" size="lg">
             <Link href="/dashboard">View Dashboard</Link>
+          </Button>
+          <Button asChild variant="secondary" className="w-full sm:w-auto" size="lg">
+            <Link href={`/bookings/${id}/gear`}>
+              <Mountain className="w-4 h-4 mr-2" /> View Gear Guide
+            </Link>
           </Button>
           <Button asChild variant="outline" className="w-full sm:w-auto" size="lg">
             <Link href="/treks">Explore More Treks</Link>

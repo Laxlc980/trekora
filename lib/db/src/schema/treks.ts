@@ -1,4 +1,4 @@
-import { pgTable, varchar, text, integer, numeric, date, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, varchar, text, integer, numeric, date, timestamp, index } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -18,9 +18,12 @@ export const treksTable = pgTable("treks", {
   status: varchar("status").notNull().default("active"),
   currentParticipants: integer("current_participants").notNull().default(0),
   difficultyLevel: varchar("difficulty_level").notNull().default("moderate"),
+  maxAltitudeMeters: integer("max_altitude_meters"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-});
+}, (table) => [
+  index("IDX_treks_agency_id").on(table.agencyId),
+]);
 
 export const insertTrekSchema = createInsertSchema(treksTable).omit({ id: true, currentParticipants: true, createdAt: true, updatedAt: true });
 export type InsertTrek = z.infer<typeof insertTrekSchema>;

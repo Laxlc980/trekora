@@ -87,9 +87,18 @@ router.post("/treks/:trekId/join-requests", async (req: Request, res: Response) 
 });
 
 router.get("/join-requests/:requestId", async (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   const [jr] = await db.select().from(joinRequestsTable).where(eq(joinRequestsTable.id, req.params.requestId));
   if (!jr) {
     res.status(404).json({ error: "Not found" });
+    return;
+  }
+  // Allow access only to the trekker who made the request or the agency that owns the trek
+  if (jr.trekkerId !== req.user.id && jr.agencyId !== req.user.id) {
+    res.status(403).json({ error: "Forbidden" });
     return;
   }
   res.json(await formatJoinRequest(jr));
@@ -135,6 +144,7 @@ router.put("/join-requests/:requestId", async (req: Request, res: Response) => {
       title: "Join Request Accepted!",
       message: `Your request to join "${trek.title}" to ${trek.destination} has been accepted. Get ready to trek!`,
       type: "join_accepted",
+      actionUrl: `/dashboard`,
     }).catch(() => {});
   } else if (parsed.data.status === "rejected") {
     createNotification({
@@ -142,6 +152,7 @@ router.put("/join-requests/:requestId", async (req: Request, res: Response) => {
       title: "Join Request Update",
       message: `Your request to join "${trek.title}" to ${trek.destination} was not accepted this time.`,
       type: "join_rejected",
+      actionUrl: `/dashboard`,
     }).catch(() => {});
   }
 

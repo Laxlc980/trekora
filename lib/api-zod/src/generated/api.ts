@@ -99,6 +99,7 @@ export const LogoutMobileSessionResponse = zod.object({
 export const GetMyProfileResponse = zod.object({
   id: zod.string(),
   email: zod.string().nullable(),
+  username: zod.string().nullable(),
   firstName: zod.string().nullable(),
   lastName: zod.string().nullable(),
   profileImageUrl: zod.string().nullable(),
@@ -127,6 +128,7 @@ export const UpdateMyProfileBody = zod.object({
 export const UpdateMyProfileResponse = zod.object({
   id: zod.string(),
   email: zod.string().nullable(),
+  username: zod.string().nullable(),
   firstName: zod.string().nullable(),
   lastName: zod.string().nullable(),
   profileImageUrl: zod.string().nullable(),
@@ -143,14 +145,24 @@ export const UpdateMyProfileResponse = zod.object({
 /**
  * @summary Set user role (trekker or agency) after first login
  */
+export const usernameMin = 3;
+export const usernameMax = 20;
+export const usernameRegex = /^[a-zA-Z0-9_]+$/;
+
 export const SetUserRoleBody = zod.object({
   role: zod.enum(["trekker", "agency"]),
+  username: zod
+    .string()
+    .min(usernameMin, "Username must be at least 3 characters")
+    .max(usernameMax, "Username must be at most 20 characters")
+    .regex(usernameRegex, "Username may only contain letters, numbers, and underscores"),
   agencyName: zod.string().optional(),
 });
 
 export const SetUserRoleResponse = zod.object({
   id: zod.string(),
   email: zod.string().nullable(),
+  username: zod.string().nullable(),
   firstName: zod.string().nullable(),
   lastName: zod.string().nullable(),
   profileImageUrl: zod.string().nullable(),
@@ -165,6 +177,18 @@ export const SetUserRoleResponse = zod.object({
 });
 
 /**
+ * @summary Check if a username is available (no auth required)
+ */
+export const CheckUsernameQueryParams = zod.object({
+  username: zod.string().min(1),
+});
+
+export const CheckUsernameResponse = zod.object({
+  available: zod.boolean(),
+  username: zod.string(),
+});
+
+/**
  * @summary List all trek packages
  */
 export const ListTreksQueryParams = zod.object({
@@ -172,6 +196,7 @@ export const ListTreksQueryParams = zod.object({
   minPrice: zod.coerce.number().optional(),
   maxPrice: zod.coerce.number().optional(),
   difficulty: zod.coerce.string().optional(),
+  maxAltitude: zod.coerce.number().optional(),
 });
 
 export const ListTreksResponseItem = zod.object({
@@ -190,6 +215,7 @@ export const ListTreksResponseItem = zod.object({
   status: zod.enum(["active", "cancelled", "completed"]),
   currentParticipants: zod.number(),
   difficultyLevel: zod.enum(["easy", "moderate", "hard", "extreme"]),
+  maxAltitudeMeters: zod.number().nullable(),
   createdAt: zod.coerce.date(),
 });
 export const ListTreksResponse = zod.array(ListTreksResponseItem);
@@ -208,6 +234,7 @@ export const CreateTrekBody = zod.object({
   description: zod.string(),
   imageUrl: zod.string().optional(),
   difficultyLevel: zod.enum(["easy", "moderate", "hard", "extreme"]),
+  maxAltitudeMeters: zod.number().int().positive().optional(),
 });
 
 /**
@@ -556,6 +583,7 @@ export const ListBidsResponseItem = zod.object({
   planDescription: zod.string(),
   message: zod.string().nullish(),
   status: zod.enum(["pending", "selected", "rejected"]),
+  rejectionMessage: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 export const ListBidsResponse = zod.array(ListBidsResponseItem);
@@ -590,6 +618,32 @@ export const SelectBidResponse = zod.object({
   planDescription: zod.string(),
   message: zod.string().nullish(),
   status: zod.enum(["pending", "selected", "rejected"]),
+  rejectionMessage: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Reject a bid (trekker only — bid owner's custom request)
+ */
+export const RejectBidParams = zod.object({
+  bidId: zod.coerce.string(),
+});
+
+export const RejectBidBody = zod.object({
+  message: zod.string().min(10, "Rejection reason must be at least 10 characters"),
+});
+
+export const RejectBidResponse = zod.object({
+  id: zod.string(),
+  customRequestId: zod.string(),
+  agencyId: zod.string(),
+  agencyName: zod.string().nullish(),
+  agencyProfileImage: zod.string().nullish(),
+  proposedPrice: zod.number(),
+  planDescription: zod.string(),
+  message: zod.string().nullish(),
+  status: zod.enum(["pending", "selected", "rejected"]),
+  rejectionMessage: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 

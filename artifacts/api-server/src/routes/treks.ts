@@ -1,9 +1,16 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, treksTable, usersTable } from "@workspace/db";
-import { eq, desc, sql, inArray } from "drizzle-orm";
+import { db, treksTable, usersTable, trekPricingSeasonsTable, reviewsTable } from "@workspace/db";
+import { eq, desc, sql, inArray, count, and, gte, lte, like, avg } from "drizzle-orm";
 import { CreateTrekBody, UpdateTrekBody, ListTreksQueryParams } from "@workspace/api-zod";
+import { createDefaultSeasons } from "./seasons";
 
 const router: IRouter = Router();
+
+function parsePagination(query: Record<string, unknown>): { page: number; limit: number; offset: number } {
+  const page = Math.max(1, parseInt(String(query.page ?? "1"), 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(String(query.limit ?? "20"), 10) || 20));
+  return { page, limit, offset: (page - 1) * limit };
+}
 
 function formatTrek(trek: typeof treksTable.$inferSelect, agencyName?: string | null) {
   return {
@@ -22,6 +29,7 @@ function formatTrek(trek: typeof treksTable.$inferSelect, agencyName?: string | 
     status: trek.status as "active" | "cancelled" | "completed",
     currentParticipants: trek.currentParticipants,
     difficultyLevel: trek.difficultyLevel as "easy" | "moderate" | "hard" | "extreme",
+    maxAltitudeMeters: trek.maxAltitudeMeters ?? null,
     createdAt: trek.createdAt.toISOString(),
   };
 }
@@ -54,30 +62,84 @@ router.get("/destinations/popular", async (req: Request, res: Response) => {
 });
 
 router.get("/treks", async (req: Request, res: Response) => {
+  const { page, limit, offset } = parsePagination(req.query);
   const params = ListTreksQueryParams.safeParse(req.query);
+  const verifiedOnly = req.query.verifiedOnly === "true";
+
+  // Build WHERE conditions in SQL so limit/offset operate on the filtered set
+  const conditions = [eq(treksTable.status, "active")];
+  if (params.success) {
+    const { destination, minPrice, maxPrice, difficulty, maxAltitude } = params.data;
+    if (destination) conditions.push(like(treksTable.destination, `%${destination}%`));
+    if (minPrice !== undefined) conditions.push(gte(treksTable.price, String(minPrice)));
+    if (maxPrice !== undefined) conditions.push(lte(treksTable.price, String(maxPrice)));
+    if (difficulty) conditions.push(eq(treksTable.difficultyLevel, difficulty));
+    if (maxAltitude !== undefined) conditions.push(lte(treksTable.maxAltitudeMeters, maxAltitude));
+  }
+
+  // If verifiedOnly, restrict to treks from verified agencies
+  if (verifiedOnly) {
+    const verifiedAgencies = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.isVerified, true));
+    const verifiedIds = verifiedAgencies.map((a) => a.id);
+    if (verifiedIds.length > 0) {
+      conditions.push(inArray(treksTable.agencyId, verifiedIds));
+    } else {
+      // No verified agencies — return empty
+      res.json({ data: [], pagination: { page, limit, total: 0, hasMore: false } });
+      return;
+    }
+  }
+
+  const where = and(...conditions);
+
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(treksTable)
+    .where(where);
+
   const treks = await db
     .select()
     .from(treksTable)
-    .where(eq(treksTable.status, "active"))
-    .orderBy(desc(treksTable.createdAt));
+    .where(where)
+    .orderBy(desc(treksTable.createdAt))
+    .limit(limit)
+    .offset(offset);
 
   const agencyIds = [...new Set(treks.map((t) => t.agencyId))];
   const agencies = agencyIds.length > 0
     ? await db.select().from(usersTable).where(inArray(usersTable.id, agencyIds))
     : [];
-  const agencyMap = Object.fromEntries(agencies.map((a) => [a.id, a.agencyName ?? `${a.firstName ?? ""} ${a.lastName ?? ""}`.trim()]));
+  const agencyMap = Object.fromEntries(agencies.map((a) => [a.id, { name: a.agencyName ?? `${a.firstName ?? ""} ${a.lastName ?? ""}`.trim(), isVerified: a.isVerified }]));
 
-  let result = treks.map((t) => formatTrek(t, agencyMap[t.agencyId]));
+  // Fetch review stats for all treks in this page
+  const trekIds = treks.map((t) => t.id);
+  const reviewStats = trekIds.length > 0
+    ? await db
+        .select({
+          trekId: reviewsTable.trekId,
+          avgRating: avg(reviewsTable.rating),
+          reviewCount: count(),
+        })
+        .from(reviewsTable)
+        .where(inArray(reviewsTable.trekId, trekIds))
+        .groupBy(reviewsTable.trekId)
+    : [];
+  const reviewMap = Object.fromEntries(
+    reviewStats.map((r) => [r.trekId, { averageRating: r.avgRating ? Number(Number(r.avgRating).toFixed(1)) : null, reviewCount: r.reviewCount }]),
+  );
 
-  if (params.success) {
-    const { destination, minPrice, maxPrice, difficulty } = params.data;
-    if (destination) result = result.filter((t) => t.destination.toLowerCase().includes(destination.toLowerCase()));
-    if (minPrice !== undefined) result = result.filter((t) => t.price >= minPrice);
-    if (maxPrice !== undefined) result = result.filter((t) => t.price <= maxPrice);
-    if (difficulty) result = result.filter((t) => t.difficultyLevel === difficulty);
-  }
-
-  res.json(result);
+  res.json({
+    data: treks.map((t) => ({
+      ...formatTrek(t, agencyMap[t.agencyId]?.name),
+      isAgencyVerified: agencyMap[t.agencyId]?.isVerified ?? false,
+      averageRating: reviewMap[t.id]?.averageRating ?? null,
+      reviewCount: reviewMap[t.id]?.reviewCount ?? 0,
+    })),
+    pagination: { page, limit, total, hasMore: offset + treks.length < total },
+  });
 });
 
 router.post("/treks", async (req: Request, res: Response) => {
@@ -99,6 +161,10 @@ router.post("/treks", async (req: Request, res: Response) => {
     .insert(treksTable)
     .values({ ...parsed.data, agencyId: req.user.id, price: String(parsed.data.price) })
     .returning();
+
+  // Auto-create Nepal's 4 standard pricing seasons for the new trek
+  createDefaultSeasons(trek.id).catch(() => {});
+
   res.status(201).json(formatTrek(trek, user.agencyName));
 });
 
@@ -109,7 +175,43 @@ router.get("/treks/:trekId", async (req: Request, res: Response) => {
     return;
   }
   const [agency] = await db.select().from(usersTable).where(eq(usersTable.id, trek.agencyId));
-  res.json(formatTrek(trek, agency?.agencyName ?? `${agency?.firstName ?? ""} ${agency?.lastName ?? ""}`.trim()));
+
+  // Determine current season and adjusted price
+  const seasons = await db.select().from(trekPricingSeasonsTable).where(eq(trekPricingSeasonsTable.trekId, trek.id));
+  let currentSeasonLabel: string | null = null;
+  let adjustedPrice = Number(trek.price);
+
+  if (seasons.length > 0) {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1; // 1-12
+    for (const s of seasons) {
+      const startMonth = new Date(s.startDate).getMonth() + 1;
+      const endMonth = new Date(s.endDate).getMonth() + 1;
+      // Handle wrap-around (e.g. Dec-Feb)
+      const inSeason = startMonth <= endMonth
+        ? currentMonth >= startMonth && currentMonth <= endMonth
+        : currentMonth >= startMonth || currentMonth <= endMonth;
+      if (inSeason) {
+        currentSeasonLabel = s.label;
+        adjustedPrice = Math.round(Number(trek.price) * Number(s.priceMultiplier));
+        break;
+      }
+    }
+  }
+
+  // Review stats for this trek
+  const [reviewStats] = await db
+    .select({ avgRating: avg(reviewsTable.rating), reviewCount: count() })
+    .from(reviewsTable)
+    .where(eq(reviewsTable.trekId, trek.id));
+
+  res.json({
+    ...formatTrek(trek, agency?.agencyName ?? `${agency?.firstName ?? ""} ${agency?.lastName ?? ""}`.trim()),
+    currentSeasonLabel,
+    adjustedPrice,
+    averageRating: reviewStats.avgRating ? Number(Number(reviewStats.avgRating).toFixed(1)) : null,
+    reviewCount: reviewStats.reviewCount,
+  });
 });
 
 router.put("/treks/:trekId", async (req: Request, res: Response) => {

@@ -1,22 +1,38 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, notificationsTable } from "@workspace/db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, count } from "drizzle-orm";
 
 const router: IRouter = Router();
+
+function parsePagination(query: Record<string, unknown>): { page: number; limit: number; offset: number } {
+  const page = Math.max(1, parseInt(String(query.page ?? "1"), 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(String(query.limit ?? "20"), 10) || 20));
+  return { page, limit, offset: (page - 1) * limit };
+}
 
 router.get("/notifications", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
+  const { page, limit, offset } = parsePagination(req.query);
+  const where = eq(notificationsTable.userId, req.user.id);
+
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(notificationsTable)
+    .where(where);
+
   const notifications = await db
     .select()
     .from(notificationsTable)
-    .where(eq(notificationsTable.userId, req.user.id))
+    .where(where)
     .orderBy(desc(notificationsTable.createdAt))
-    .limit(50);
-  res.json(
-    notifications.map((n) => ({
+    .limit(limit)
+    .offset(offset);
+
+  res.json({
+    data: notifications.map((n) => ({
       id: n.id,
       userId: n.userId,
       title: n.title,
@@ -25,7 +41,8 @@ router.get("/notifications", async (req: Request, res: Response) => {
       read: n.read,
       createdAt: n.createdAt.toISOString(),
     })),
-  );
+    pagination: { page, limit, total, hasMore: offset + notifications.length < total },
+  });
 });
 
 router.patch("/notifications/read-all", async (req: Request, res: Response) => {

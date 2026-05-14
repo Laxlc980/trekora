@@ -6,6 +6,11 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { authMiddleware } from "./middlewares/authMiddleware";
 
+const allowedOrigin = process.env.ALLOWED_ORIGIN;
+if (!allowedOrigin) {
+  throw new Error("ALLOWED_ORIGIN environment variable is required but not set.");
+}
+
 const app: Express = express();
 
 app.use(
@@ -27,7 +32,7 @@ app.use(
     },
   }),
 );
-app.use(cors({ credentials: true, origin: true }));
+app.use(cors({ credentials: true, origin: allowedOrigin }));
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

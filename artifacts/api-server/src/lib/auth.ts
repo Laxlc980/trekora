@@ -77,6 +77,24 @@ export async function clearSession(
   res.clearCookie(SESSION_COOKIE, { path: "/" });
 }
 
+/**
+ * Extracts the session ID from the incoming request.
+ *
+ * Two authentication methods are supported:
+ *
+ * 1. **Bearer token** (mobile / API clients):
+ *    The client sends `Authorization: Bearer <sid>` in the request header.
+ *    The `sid` is the opaque session token returned by the mobile auth
+ *    token-exchange endpoint (`POST /api/mobile-auth/token-exchange`).
+ *
+ * 2. **Cookie** (browser / web clients):
+ *    The `sid` cookie is set by the OIDC callback handler after a successful
+ *    browser login flow. It is httpOnly, secure, sameSite=lax.
+ *
+ * Bearer token takes precedence if both are present (unlikely in practice).
+ * The returned `sid` is then used by `authMiddleware` to load the session
+ * from the database, refresh tokens if expired, and populate `req.user`.
+ */
 export function getSessionId(req: Request): string | undefined {
   const authHeader = req.headers["authorization"];
   if (authHeader?.startsWith("Bearer ")) {

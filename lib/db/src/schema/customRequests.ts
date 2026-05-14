@@ -1,4 +1,4 @@
-import { pgTable, varchar, text, integer, numeric, date, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, varchar, text, integer, numeric, date, timestamp, index } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -16,7 +16,9 @@ export const customRequestsTable = pgTable("custom_requests", {
   selectedBidId: varchar("selected_bid_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-});
+}, (table) => [
+  index("IDX_custom_requests_trekker_id").on(table.trekkerId),
+]);
 
 export const insertCustomRequestSchema = createInsertSchema(customRequestsTable).omit({ id: true, createdAt: true, updatedAt: true });
 export type InsertCustomRequest = z.infer<typeof insertCustomRequestSchema>;

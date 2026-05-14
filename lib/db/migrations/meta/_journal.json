@@ -1,0 +1,18 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    { "idx": 0, "version": "7", "when": 1746921600000, "tag": "0000_initial_schema",           "breakpoints": true },
+    { "idx": 1, "version": "7", "when": 1746921601000, "tag": "0001_add_indexes",               "breakpoints": true },
+    { "idx": 2, "version": "7", "when": 1746921602000, "tag": "0002_add_username",              "breakpoints": true },
+    { "idx": 3, "version": "7", "when": 1746921603000, "tag": "0003_add_bid_rejection_message", "breakpoints": true },
+    { "idx": 4, "version": "7", "when": 1746921604000, "tag": "0004_dm_altitude_rating",        "breakpoints": true },
+    { "idx": 5, "version": "7", "when": 1746921605000, "tag": "0005_permits",                   "breakpoints": true },
+    { "idx": 6, "version": "7", "when": 1746921606000, "tag": "0006_emergency_gear_seasons_teahouses", "breakpoints": true },
+    { "idx": 7, "version": "7", "when": 1746921607000, "tag": "0007_platform_commission",       "breakpoints": true },
+    { "idx": 8, "version": "7", "when": 1746921608000, "tag": "0008_reviews",                   "breakpoints": true },
+    { "idx": 9, "version": "7", "when": 1746921609000, "tag": "0009_agency_verification",       "breakpoints": true },
+    { "idx": 10, "version": "7", "when": 1746921610000, "tag": "0010_sos_alerts",              "breakpoints": true },
+    { "idx": 11, "version": "7", "when": 1746921611000, "tag": "0011_admin_is_banned",         "breakpoints": true }
+  ]
+}

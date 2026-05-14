@@ -36,7 +36,7 @@ export default function Dashboard() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-serif font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground capitalize">Welcome back, {profile.firstName || profile.email} ({profile.role})</p>
+        <p className="text-muted-foreground capitalize">Welcome back, {profile.username ? `@${profile.username}` : profile.firstName || profile.email} ({profile.role})</p>
       </div>
       {profile.role === "agency" ? <AgencyDashboardView /> : <TrekkerDashboardView />}
     </div>
@@ -128,14 +128,22 @@ function AgencyDashboardView() {
 
   return (
     <div className="space-y-8">
+      {/* Verification Banner */}
+      <VerificationBanner />
+
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-6 flex items-center gap-4">
             <div className="p-3 bg-primary/10 rounded-full text-primary"><DollarSign className="w-5 h-5" /></div>
             <div>
-              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Total Earnings</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Net Earnings</p>
               <p className="text-2xl font-bold">${(dashboard?.totalEarnings ?? 0).toLocaleString()}</p>
+              {(dashboard as any)?.totalPlatformFees > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Platform fee ({(dashboard as any)?.platformFeePercent ?? 5}%): -${((dashboard as any)?.totalPlatformFees ?? 0).toLocaleString()}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -592,5 +600,128 @@ function TrekkerDashboardView() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Verification Banner for Agency Dashboard
+// ---------------------------------------------------------------------------
+function VerificationBanner() {
+  const { isAuthenticated } = useAuth();
+  const { data: profile } = useGetMyProfile({ query: { enabled: isAuthenticated } });
+  const { toast } = useToast();
+
+  const [ntbNumber, setNtbNumber] = useState("");
+  const [licenseUrl, setLicenseUrl] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!profile || profile.role !== "agency") return null;
+
+  const status = (profile as any).verificationStatus ?? "unsubmitted";
+  const note = (profile as any).verificationNote;
+
+  if (status === "verified") {
+    return (
+      <Card className="border-green-200 bg-green-50/50 dark:bg-green-950/10">
+        <CardContent className="p-4 flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 text-green-600" />
+          <div>
+            <p className="font-semibold text-green-800 dark:text-green-300 text-sm">Verified Agency ✓</p>
+            <p className="text-xs text-green-700 dark:text-green-400">Your profile shows a verified badge to trekkers.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (status === "pending") {
+    return (
+      <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/10">
+        <CardContent className="p-4 flex items-center gap-3">
+          <Clock className="w-5 h-5 text-amber-600" />
+          <div>
+            <p className="font-semibold text-amber-800 dark:text-amber-300 text-sm">Verification Pending 🕐</p>
+            <p className="text-xs text-amber-700 dark:text-amber-400">Your documents are being reviewed. This usually takes 1-2 business days.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (status === "rejected") {
+    return (
+      <Card className="border-red-200 bg-red-50/50 dark:bg-red-950/10">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-5 h-5 text-red-600 font-bold text-center">✗</div>
+            <p className="font-semibold text-red-800 dark:text-red-300 text-sm">Verification Rejected</p>
+          </div>
+          {note && <p className="text-xs text-red-700 dark:text-red-400 mb-2">Reason: {note}</p>}
+          <p className="text-xs text-muted-foreground">You can resubmit with updated documents below.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // unsubmitted — show the application form
+  const handleSubmit = async () => {
+    if (!ntbNumber.trim() || !licenseUrl.trim()) {
+      toast({ title: "Both fields are required", variant: "destructive" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/agencies/verification/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ ntbRegistrationNumber: ntbNumber.trim(), licenseDocumentUrl: licenseUrl.trim() }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        toast({ title: "Error", description: err.error ?? "Failed to submit", variant: "destructive" });
+        return;
+      }
+      toast({ title: "Verification submitted!", description: "We'll review your documents shortly." });
+      // Force profile refetch
+      window.location.reload();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Card className="border-primary/30 bg-primary/5">
+      <CardContent className="p-6">
+        <h3 className="font-semibold mb-1 flex items-center gap-2">
+          <CheckCircle2 className="w-5 h-5 text-primary" /> Get Verified
+        </h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Verified agencies get a badge on their profile and treks, increasing trekker trust.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium">NTB Registration Number</label>
+            <Input
+              placeholder="e.g. NTB-2024-1234"
+              value={ntbNumber}
+              onChange={(e) => setNtbNumber(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium">License Document URL</label>
+            <Input
+              placeholder="https://..."
+              value={licenseUrl}
+              onChange={(e) => setLicenseUrl(e.target.value)}
+            />
+          </div>
+        </div>
+        <Button onClick={handleSubmit} disabled={submitting} size="sm">
+          {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          Submit for Verification
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

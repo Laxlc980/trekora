@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Bell } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -7,7 +7,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@workspace/replit-auth-web";
-import { useQueryClient } from "@tanstack/react-query";
 
 const NOTIF_ICONS: Record<string, string> = {
   join_accepted: "✅",
@@ -15,6 +14,9 @@ const NOTIF_ICONS: Record<string, string> = {
   bid_received: "💰",
   bid_selected: "🎉",
 };
+
+const POLL_INTERVAL_MS = 30_000; // 30 seconds
+const SOUND_PREF_KEY = "trekora_notif_sound";
 
 type NotifItem = {
   id: string;
@@ -25,59 +27,144 @@ type NotifItem = {
   createdAt: string;
 };
 
+// ---------------------------------------------------------------------------
+// Subtle chime using the Web Audio API — no external file needed.
+// Plays two sine tones in sequence (C5 → E5) for ~300ms total.
+// ---------------------------------------------------------------------------
+function playChime(audioCtx: AudioContext) {
+  const notes = [523.25, 659.25]; // C5, E5
+  let startTime = audioCtx.currentTime;
+
+  notes.forEach((freq) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, startTime);
+
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(0.18, startTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.14);
+
+    osc.start(startTime);
+    osc.stop(startTime + 0.15);
+
+    startTime += 0.15;
+  });
+}
+
 export function NotificationBell() {
   const { isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
-  const queryClient = useQueryClient();
-
   const [notifications, setNotifications] = useState<NotifItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loaded, setLoaded] = useState(false);
 
-  const unread = notifications.filter((n) => !n.read).length;
+  // Track the IDs we've already seen so we can detect new arrivals on poll
+  const seenIdsRef = useRef<Set<string>>(new Set());
+  // Whether the user has interacted with the page (required for AudioContext)
+  const hasInteractedRef = useRef(false);
+  // Lazily created AudioContext — created on first interaction
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
-  const fetchNotifications = async () => {
-    if (loaded) return;
-    setLoading(true);
+  // Sound preference — read from localStorage, default on
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     try {
-      const res = await fetch("/api/notifications", { credentials: "include" });
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data);
-      }
-    } finally {
-      setLoading(false);
-      setLoaded(true);
+      const stored = localStorage.getItem(SOUND_PREF_KEY);
+      return stored === null ? true : stored === "true";
+    } catch {
+      return true;
     }
+  });
+
+  const toggleSound = () => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      try { localStorage.setItem(SOUND_PREF_KEY, String(next)); } catch {}
+      return next;
+    });
   };
 
+  // Mark user interaction so AudioContext is allowed
+  useEffect(() => {
+    const mark = () => { hasInteractedRef.current = true; };
+    window.addEventListener("click", mark, { once: true });
+    window.addEventListener("keydown", mark, { once: true });
+    return () => {
+      window.removeEventListener("click", mark);
+      window.removeEventListener("keydown", mark);
+    };
+  }, []);
+
+  const maybePlayChime = useCallback(() => {
+    if (!soundEnabled || !hasInteractedRef.current) return;
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContext();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === "suspended") {
+        ctx.resume().then(() => playChime(ctx)).catch(() => {});
+      } else {
+        playChime(ctx);
+      }
+    } catch {
+      // AudioContext not supported — silently ignore
+    }
+  }, [soundEnabled]);
+
+  const fetchNotifications = useCallback(async (isBackground = false) => {
+    if (!isAuthenticated) return;
+    if (!isBackground) setLoading(true);
+    try {
+      const res = await fetch("/api/notifications?limit=50", { credentials: "include" });
+      if (!res.ok) return;
+      const data: { data?: NotifItem[]; pagination?: unknown } | NotifItem[] = await res.json();
+      // Handle both paginated ({ data: [...] }) and legacy (array) shapes
+      const items: NotifItem[] = Array.isArray(data) ? data : (data as any).data ?? [];
+
+      if (isBackground && seenIdsRef.current.size > 0) {
+        const newItems = items.filter((n) => !seenIdsRef.current.has(n.id));
+        if (newItems.length > 0) {
+          maybePlayChime();
+        }
+      }
+
+      items.forEach((n) => seenIdsRef.current.add(n.id));
+      setNotifications(items);
+    } finally {
+      if (!isBackground) setLoading(false);
+    }
+  }, [isAuthenticated, maybePlayChime]);
+
+  // Initial load + background polling
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetchNotifications(false);
+    const timer = setInterval(() => fetchNotifications(true), POLL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [isAuthenticated, fetchNotifications]);
+
   const markAllRead = async () => {
-    await fetch("/api/notifications/read-all", {
-      method: "PATCH",
-      credentials: "include",
-    });
+    await fetch("/api/notifications/read-all", { method: "PATCH", credentials: "include" });
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
   const markRead = async (id: string) => {
-    await fetch(`/api/notifications/${id}/read`, {
-      method: "PATCH",
-      credentials: "include",
-    });
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    );
+    await fetch(`/api/notifications/${id}/read`, { method: "PATCH", credentials: "include" });
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
 
   const handleOpen = (isOpen: boolean) => {
     setOpen(isOpen);
-    if (isOpen) {
-      setLoaded(false);
-      fetchNotifications();
-    }
+    if (isOpen) fetchNotifications(false);
   };
 
   if (!isAuthenticated) return null;
+
+  const unread = notifications.filter((n) => !n.read).length;
 
   return (
     <DropdownMenu open={open} onOpenChange={handleOpen}>
@@ -91,24 +178,32 @@ export function NotificationBell() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 max-h-[480px] overflow-y-auto p-0">
+      <DropdownMenuContent align="end" className="w-80 max-h-[520px] overflow-y-auto p-0">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <p className="font-semibold text-sm">Notifications</p>
-          {unread > 0 && (
+          <div className="flex items-center gap-3">
+            {unread > 0 && (
+              <button onClick={markAllRead} className="text-xs text-primary hover:underline">
+                Mark all read
+              </button>
+            )}
             <button
-              onClick={markAllRead}
-              className="text-xs text-primary hover:underline"
+              onClick={toggleSound}
+              title={soundEnabled ? "Mute notification sounds" : "Unmute notification sounds"}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={soundEnabled ? "Mute sounds" : "Unmute sounds"}
             >
-              Mark all read
+              {soundEnabled
+                ? <Bell className="w-3.5 h-3.5" />
+                : <BellOff className="w-3.5 h-3.5" />}
             </button>
-          )}
+          </div>
         </div>
+
         {loading ? (
           <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
         ) : notifications.length === 0 ? (
-          <div className="py-8 text-center text-sm text-muted-foreground">
-            No notifications yet
-          </div>
+          <div className="py-8 text-center text-sm text-muted-foreground">No notifications yet</div>
         ) : (
           <ul>
             {notifications.map((n) => (

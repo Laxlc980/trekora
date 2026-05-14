@@ -151,7 +151,7 @@ export default function ThreadDetailPage() {
       {isAuthenticated ? (
         <Card className="border-primary/20">
           <CardContent className="p-4 space-y-3">
-            <p className="text-sm font-medium">Reply as {profile?.firstName ?? "you"}</p>
+            <p className="text-sm font-medium">Reply as {profile?.username ? `@${profile.username}` : (profile?.firstName ?? "you")}</p>
             <Textarea
               placeholder="Share your thoughts…"
               value={replyBody}

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, jsonb, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const sessionsTable = pgTable(
   "sessions",
@@ -14,6 +14,7 @@ export const sessionsTable = pgTable(
 export const usersTable = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
+  username: varchar("username", { length: 20 }).unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -22,6 +23,14 @@ export const usersTable = pgTable("users", {
   bio: varchar("bio", { length: 1000 }),
   phone: varchar("phone"),
   location: varchar("location"),
+  // Verification fields
+  isVerified: boolean("is_verified").notNull().default(false),
+  ntbRegistrationNumber: varchar("ntb_registration_number"),
+  licenseDocumentUrl: varchar("license_document_url"),
+  verificationStatus: varchar("verification_status").notNull().default("unsubmitted"), // unsubmitted | pending | verified | rejected
+  verificationNote: text("verification_note"),
+  // Admin fields
+  isBanned: boolean("is_banned").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

@@ -60,7 +60,9 @@ export default function Profile() {
         </div>
         <div>
           <h1 className="text-3xl font-serif font-bold">Your Profile</h1>
-          <p className="text-muted-foreground capitalize">{profile.role} Account • {profile.email}</p>
+          <p className="text-muted-foreground capitalize">
+            {profile.username ? `@${profile.username} · ` : ""}{profile.role} Account
+          </p>
         </div>
       </div>
 
@@ -70,6 +72,14 @@ export default function Profile() {
           <CardDescription>Update your contact details and public profile.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {profile.username && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5 text-muted-foreground">Username (cannot be changed)</Label>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-md border border-border bg-muted/40 text-sm font-medium">
+                @{profile.username}
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>First Name</Label>

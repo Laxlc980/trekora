@@ -12,9 +12,12 @@ import CustomRequestsList from "@/pages/custom-requests/index";
 import CustomRequestDetail from "@/pages/custom-requests/[id]";
 import Dashboard from "@/pages/dashboard/index";
 import BookingConfirmation from "@/pages/bookings/[id]";
+import GearGuide from "@/pages/bookings/gear";
 import Profile from "@/pages/profile/index";
 import CommunityList from "@/pages/community/index";
 import CommunityThread from "@/pages/community/[id]";
+import GearMarketplace from "@/pages/gear/index";
+import AdminDashboard from "@/pages/admin/index";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -30,10 +33,13 @@ function Router() {
         <Route path="/custom-requests" component={CustomRequestsList} />
         <Route path="/custom-requests/:id" component={CustomRequestDetail} />
         <Route path="/dashboard" component={Dashboard} />
+        <Route path="/bookings/:id/gear" component={GearGuide} />
         <Route path="/bookings/:id" component={BookingConfirmation} />
         <Route path="/profile" component={Profile} />
         <Route path="/community" component={CommunityList} />
         <Route path="/community/:id" component={CommunityThread} />
+        <Route path="/gear" component={GearMarketplace} />
+        <Route path="/admin" component={AdminDashboard} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
