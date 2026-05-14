@@ -2,16 +2,8 @@
   "version": 2,
   "installCommand": "cd ../.. && pnpm install --no-frozen-lockfile",
   "buildCommand": "",
-  "builds": [
-    {
-      "src": "api/index.ts",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "api/index.ts"
-    }
+  "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api" }
   ]
 }
