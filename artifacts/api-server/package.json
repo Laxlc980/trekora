@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "export NODE_ENV=development && node --enable-source-maps ./src/index.ts",
-    "start": "node --enable-source-maps ./src/index.ts",
+    "dev": "export NODE_ENV=development && tsx --enable-source-maps ./src/index.ts",
+    "start": "tsx --enable-source-maps ./src/index.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -29,6 +29,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
     "@types/nodemailer": "^8.0.0",
-    "pino-pretty": "^13"
+    "pino-pretty": "^13",
+    "tsx": "catalog:"
   }
 }
