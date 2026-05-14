@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd artifacts/trekmarket && npx vite build --config vite.config.ts",
+  "buildCommand": "pnpm -r --if-present run build",
   "installCommand": "pnpm install --no-frozen-lockfile",
   "outputDirectory": "artifacts/trekmarket/dist"
 }
