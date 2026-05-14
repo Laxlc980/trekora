@@ -1,19 +1,16 @@
-import express, { type Express, type Request, type Response } from "express";
+import express, { type Express } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import pinoHttp from "pino-http";
-import router from "./routes";
-import { logger } from "./lib/logger";
-import { authMiddleware } from "./middlewares/authMiddleware";
+import router from "./routes/index.js";
+import { logger } from "./lib/logger.js";
+import { authMiddleware } from "./middlewares/authMiddleware.js";
 
-const allowedOrigin = process.env.ALLOWED_ORIGIN;
-if (!allowedOrigin) {
-  throw new Error("ALLOWED_ORIGIN environment variable is required but not set.");
-}
+const allowedOrigin = process.env["ALLOWED_ORIGIN"] ?? "*";
 
 const app: Express = express();
 
-const pinoMiddleware = (pinoHttp as any).default || pinoHttp;
+const pinoMiddleware = (pinoHttp as any).default ?? pinoHttp;
 app.use(
   pinoMiddleware({
     logger,
@@ -26,13 +23,12 @@ app.use(
         };
       },
       res(res: any) {
-        return {
-          statusCode: res.statusCode,
-        };
+        return { statusCode: res.statusCode };
       },
     },
   }),
 );
+
 app.use(cors({ credentials: true, origin: allowedOrigin }));
 app.use(cookieParser());
 app.use(express.json());
