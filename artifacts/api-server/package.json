@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "export NODE_ENV=development && node --enable-source-maps ./src/index.ts",
+    "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./src/index.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -29,6 +30,8 @@
     "@types/express": "^5.0.6",
     "@types/node": "catalog:",
     "@types/nodemailer": "^8.0.0",
+    "esbuild": "0.27.3",
+    "esbuild-plugin-pino": "^2.2.0",
     "pino-pretty": "^13"
   }
 }
