@@ -19,7 +19,7 @@ import {
   SESSION_TTL,
   ISSUER_URL,
   type SessionData,
-} from "../lib/auth.js";
+} from "../lib/auth";
 
 const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 

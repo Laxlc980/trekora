@@ -2,7 +2,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, usersTable, bookingsTable, treksTable, sosAlertsTable, userPermitsTable, permitTypesTable } from "@workspace/db";
 import { eq, and, gte, desc, count, sum, sql, or, like, inArray } from "drizzle-orm";
-import { createNotification } from "../lib/notify.js";
+import { createNotification } from "../lib/notify";
 import crypto from "crypto";
 
 const router: IRouter = Router();

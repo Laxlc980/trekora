@@ -1,6 +1,3 @@
-/**
- * Vercel serverless entry point — wired to the full Express app.
- */
-import app from "../src/app.js";
+import app from "../dist/app.mjs";
 
 export default app;
