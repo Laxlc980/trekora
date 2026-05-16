@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "cd ../.. && pnpm install --no-frozen-lockfile --ignore-scripts",
+  "installCommand": "cd ../.. && pnpm install --no-frozen-lockfile",
   "buildCommand": "node build.mjs",
   "outputDirectory": ".",
   "rewrites": [
