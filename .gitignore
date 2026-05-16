@@ -8,6 +8,10 @@ out-tsc
 .expo
 .expo-shared
 
+# Allow api-server's prebuilt bundle for Vercel deployment
+!artifacts/api-server/dist
+!artifacts/api-server/dist/**
+
 # dependencies
 node_modules
 
