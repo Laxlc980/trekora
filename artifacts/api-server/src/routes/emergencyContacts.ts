@@ -40,7 +40,7 @@ router.post("/emergency-contacts", async (req: Request, res: Response) => {
 router.put("/emergency-contacts/:id", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  const [existing] = await db.select().from(emergencyContactsTable).where(and(eq(emergencyContactsTable.id, req.params.id), eq(emergencyContactsTable.userId, req.user.id)));
+  const [existing] = await db.select().from(emergencyContactsTable).where(and(eq(emergencyContactsTable.id, String(req.params.id)), eq(emergencyContactsTable.userId, req.user.id)));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
 
   const { name, relationship, phone, email, isPrimary } = req.body;
@@ -52,16 +52,16 @@ router.put("/emergency-contacts/:id", async (req: Request, res: Response) => {
     name: name ?? existing.name, relationship: relationship ?? existing.relationship,
     phone: phone ?? existing.phone, email: email !== undefined ? email : existing.email,
     isPrimary: isPrimary ?? existing.isPrimary,
-  }).where(eq(emergencyContactsTable.id, req.params.id)).returning();
+  }).where(eq(emergencyContactsTable.id, String(req.params.id))).returning();
 
   res.json({ ...updated, createdAt: updated.createdAt.toISOString() });
 });
 
 router.delete("/emergency-contacts/:id", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const [existing] = await db.select().from(emergencyContactsTable).where(and(eq(emergencyContactsTable.id, req.params.id), eq(emergencyContactsTable.userId, req.user.id)));
+  const [existing] = await db.select().from(emergencyContactsTable).where(and(eq(emergencyContactsTable.id, String(req.params.id)), eq(emergencyContactsTable.userId, req.user.id)));
   if (!existing) { res.status(404).json({ error: "Not found" }); return; }
-  await db.delete(emergencyContactsTable).where(eq(emergencyContactsTable.id, req.params.id));
+  await db.delete(emergencyContactsTable).where(eq(emergencyContactsTable.id, String(req.params.id)));
   res.json({ success: true });
 });
 

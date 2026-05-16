@@ -102,7 +102,7 @@ router.post("/admin/verifications/:userId/approve", async (req: Request, res: Re
     return;
   }
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.params.userId));
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, String(req.params.userId)));
   if (!user || user.verificationStatus !== "pending") {
     res.status(404).json({ error: "No pending verification found for this user" });
     return;
@@ -111,10 +111,10 @@ router.post("/admin/verifications/:userId/approve", async (req: Request, res: Re
   await db
     .update(usersTable)
     .set({ isVerified: true, verificationStatus: "verified", verificationNote: null, updatedAt: new Date() })
-    .where(eq(usersTable.id, req.params.userId));
+    .where(eq(usersTable.id, String(req.params.userId)));
 
   createNotification({
-    userId: req.params.userId,
+    userId: String(req.params.userId),
     title: "Agency Verified! ✓",
     message: "Your agency has been verified! Your profile now shows a verified badge. Trekkers can filter for verified agencies.",
     type: "join_accepted",
@@ -145,7 +145,7 @@ router.post("/admin/verifications/:userId/reject", async (req: Request, res: Res
     return;
   }
 
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, req.params.userId));
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, String(req.params.userId)));
   if (!user || user.verificationStatus !== "pending") {
     res.status(404).json({ error: "No pending verification found for this user" });
     return;
@@ -154,10 +154,10 @@ router.post("/admin/verifications/:userId/reject", async (req: Request, res: Res
   await db
     .update(usersTable)
     .set({ isVerified: false, verificationStatus: "rejected", verificationNote: note.trim(), updatedAt: new Date() })
-    .where(eq(usersTable.id, req.params.userId));
+    .where(eq(usersTable.id, String(req.params.userId)));
 
   createNotification({
-    userId: req.params.userId,
+    userId: String(req.params.userId),
     title: "Verification Not Approved",
     message: `Your agency verification was not approved. Reason: ${note.trim()}. You can resubmit with updated documents.`,
     type: "join_rejected",

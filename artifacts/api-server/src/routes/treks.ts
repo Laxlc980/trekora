@@ -170,7 +170,7 @@ router.post("/treks", async (req: Request, res: Response) => {
 });
 
 router.get("/treks/:trekId", async (req: Request, res: Response) => {
-  const [trek] = await db.select().from(treksTable).where(eq(treksTable.id, req.params.trekId));
+  const [trek] = await db.select().from(treksTable).where(eq(treksTable.id, String(req.params.trekId)));
   if (!trek) {
     res.status(404).json({ error: "Trek not found" });
     return;
@@ -220,7 +220,7 @@ router.put("/treks/:trekId", async (req: Request, res: Response) => {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const [trek] = await db.select().from(treksTable).where(eq(treksTable.id, req.params.trekId));
+  const [trek] = await db.select().from(treksTable).where(eq(treksTable.id, String(req.params.trekId)));
   if (!trek) {
     res.status(404).json({ error: "Trek not found" });
     return;
@@ -239,7 +239,7 @@ router.put("/treks/:trekId", async (req: Request, res: Response) => {
   const [updated] = await db
     .update(treksTable)
     .set(updateData)
-    .where(eq(treksTable.id, req.params.trekId))
+    .where(eq(treksTable.id, String(req.params.trekId)))
     .returning();
   const [agency] = await db.select().from(usersTable).where(eq(usersTable.id, updated.agencyId));
   res.json(formatTrek(updated, agency?.agencyName));
@@ -250,17 +250,17 @@ router.delete("/treks/:trekId", async (req: Request, res: Response) => {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const [trek] = await db.select().from(treksTable).where(eq(treksTable.id, req.params.trekId));
+  const [trek] = await db.select().from(treksTable).where(eq(treksTable.id, String(req.params.trekId)));
   if (!trek || trek.agencyId !== req.user.id) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
-  await db.delete(treksTable).where(eq(treksTable.id, req.params.trekId));
+  await db.delete(treksTable).where(eq(treksTable.id, String(req.params.trekId)));
   res.json({ success: true });
 });
 
 router.get("/agencies/:agencyId", async (req: Request, res: Response) => {
-  const [agency] = await db.select().from(usersTable).where(eq(usersTable.id, req.params.agencyId));
+  const [agency] = await db.select().from(usersTable).where(eq(usersTable.id, String(req.params.agencyId)));
   if (!agency || agency.role !== "agency") {
     res.status(404).json({ error: "Agency not found" });
     return;
@@ -268,7 +268,7 @@ router.get("/agencies/:agencyId", async (req: Request, res: Response) => {
   const agencyTreks = await db
     .select()
     .from(treksTable)
-    .where(eq(treksTable.agencyId, req.params.agencyId));
+    .where(eq(treksTable.agencyId, String(req.params.agencyId)));
   res.json({
     id: agency.id,
     agencyName: agency.agencyName,

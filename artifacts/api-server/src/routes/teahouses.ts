@@ -53,7 +53,7 @@ router.post("/checkins", async (req: Request, res: Response) => {
 
 // GET /checkins/trail/:destination — public feed of recent check-ins
 router.get("/checkins/trail/:destination", async (req: Request, res: Response) => {
-  const destination = req.params.destination;
+  const destination = String(req.params.destination);
 
   const teahouses = await db.select({ id: teahousesTable.id }).from(teahousesTable).where(eq(teahousesTable.destination, destination));
   if (teahouses.length === 0) { res.json([]); return; }

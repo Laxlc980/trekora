@@ -146,7 +146,7 @@ router.get("/bookings/:bookingId", async (req: Request, res: Response) => {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, req.params.bookingId));
+  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, String(req.params.bookingId)));
   if (!booking) {
     res.status(404).json({ error: "Not found" });
     return;
@@ -163,7 +163,7 @@ router.delete("/bookings/:bookingId", async (req: Request, res: Response) => {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, req.params.bookingId));
+  const [booking] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, String(req.params.bookingId)));
   if (!booking || booking.trekkerId !== req.user.id) {
     res.status(403).json({ error: "Forbidden" });
     return;
@@ -171,7 +171,7 @@ router.delete("/bookings/:bookingId", async (req: Request, res: Response) => {
   const [updated] = await db
     .update(bookingsTable)
     .set({ status: "cancelled", updatedAt: new Date() })
-    .where(eq(bookingsTable.id, req.params.bookingId))
+    .where(eq(bookingsTable.id, String(req.params.bookingId)))
     .returning();
   res.json(await formatBooking(updated));
 });

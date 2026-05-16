@@ -92,7 +92,7 @@ router.get("/threads/:threadId", async (req: Request, res: Response) => {
   const [thread] = await db
     .select()
     .from(discussionThreadsTable)
-    .where(eq(discussionThreadsTable.id, req.params.threadId));
+    .where(eq(discussionThreadsTable.id, String(req.params.threadId)));
   if (!thread) {
     res.status(404).json({ error: "Thread not found" });
     return;
@@ -100,7 +100,7 @@ router.get("/threads/:threadId", async (req: Request, res: Response) => {
   const replies = await db
     .select()
     .from(threadRepliesTable)
-    .where(eq(threadRepliesTable.threadId, req.params.threadId))
+    .where(eq(threadRepliesTable.threadId, String(req.params.threadId)))
     .orderBy(threadRepliesTable.createdAt);
   res.json({
     id: thread.id,
@@ -131,7 +131,7 @@ router.post("/threads/:threadId/replies", async (req: Request, res: Response) =>
   const [thread] = await db
     .select()
     .from(discussionThreadsTable)
-    .where(eq(discussionThreadsTable.id, req.params.threadId));
+    .where(eq(discussionThreadsTable.id, String(req.params.threadId)));
   if (!thread) {
     res.status(404).json({ error: "Thread not found" });
     return;
@@ -146,7 +146,7 @@ router.post("/threads/:threadId/replies", async (req: Request, res: Response) =>
   const [reply] = await db
     .insert(threadRepliesTable)
     .values({
-      threadId: req.params.threadId,
+      threadId: String(req.params.threadId),
       body: body.trim(),
       authorId: req.user.id,
       authorName: name,
@@ -156,7 +156,7 @@ router.post("/threads/:threadId/replies", async (req: Request, res: Response) =>
   await db
     .update(discussionThreadsTable)
     .set({ replyCount: sql`reply_count + 1`, updatedAt: new Date() })
-    .where(eq(discussionThreadsTable.id, req.params.threadId));
+    .where(eq(discussionThreadsTable.id, String(req.params.threadId)));
   res.status(201).json({
     id: reply.id,
     threadId: reply.threadId,

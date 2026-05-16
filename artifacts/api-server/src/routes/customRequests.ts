@@ -77,7 +77,7 @@ router.post("/custom-requests", async (req: Request, res: Response) => {
 });
 
 router.get("/custom-requests/:requestId", async (req: Request, res: Response) => {
-  const [cr] = await db.select().from(customRequestsTable).where(eq(customRequestsTable.id, req.params.requestId));
+  const [cr] = await db.select().from(customRequestsTable).where(eq(customRequestsTable.id, String(req.params.requestId)));
   if (!cr) {
     res.status(404).json({ error: "Not found" });
     return;

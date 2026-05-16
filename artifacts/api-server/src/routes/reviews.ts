@@ -14,7 +14,7 @@ router.post("/treks/:trekId/reviews", async (req: Request, res: Response) => {
     return;
   }
 
-  const trekId = req.params.trekId;
+  const trekId = String(req.params.trekId);
   const { rating, title, body } = req.body as { rating?: number; title?: string; body?: string };
 
   // Validate input
@@ -105,7 +105,7 @@ router.post("/treks/:trekId/reviews", async (req: Request, res: Response) => {
 // GET /treks/:trekId/reviews — list all reviews for a trek (no auth)
 // ---------------------------------------------------------------------------
 router.get("/treks/:trekId/reviews", async (req: Request, res: Response) => {
-  const trekId = req.params.trekId;
+  const trekId = String(req.params.trekId);
 
   const reviews = await db
     .select({
@@ -142,7 +142,7 @@ router.get("/treks/:trekId/reviews", async (req: Request, res: Response) => {
 // GET /agencies/:agencyId/reviews — all reviews for all treks by this agency
 // ---------------------------------------------------------------------------
 router.get("/agencies/:agencyId/reviews", async (req: Request, res: Response) => {
-  const agencyId = req.params.agencyId;
+  const agencyId = String(req.params.agencyId);
 
   const reviews = await db
     .select({

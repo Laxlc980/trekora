@@ -57,7 +57,7 @@ router.post("/dm/request", async (req: Request, res: Response) => {
 router.post("/dm/request/:id/accept", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  const [dmReq] = await db.select().from(dmRequestsTable).where(eq(dmRequestsTable.id, req.params.id));
+  const [dmReq] = await db.select().from(dmRequestsTable).where(eq(dmRequestsTable.id, String(req.params.id)));
   if (!dmReq) { res.status(404).json({ error: "Request not found" }); return; }
   if (dmReq.toUserId !== req.user.id) { res.status(403).json({ error: "Forbidden" }); return; }
   if (dmReq.status !== "pending") { res.status(409).json({ error: "Request is no longer pending" }); return; }
@@ -65,7 +65,7 @@ router.post("/dm/request/:id/accept", async (req: Request, res: Response) => {
   const [updated] = await db
     .update(dmRequestsTable)
     .set({ status: "accepted" })
-    .where(eq(dmRequestsTable.id, req.params.id))
+    .where(eq(dmRequestsTable.id, String(req.params.id)))
     .returning();
 
   res.json(updated);
@@ -77,7 +77,7 @@ router.post("/dm/request/:id/accept", async (req: Request, res: Response) => {
 router.post("/dm/request/:id/reject", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  const [dmReq] = await db.select().from(dmRequestsTable).where(eq(dmRequestsTable.id, req.params.id));
+  const [dmReq] = await db.select().from(dmRequestsTable).where(eq(dmRequestsTable.id, String(req.params.id)));
   if (!dmReq) { res.status(404).json({ error: "Request not found" }); return; }
   if (dmReq.toUserId !== req.user.id) { res.status(403).json({ error: "Forbidden" }); return; }
   if (dmReq.status !== "pending") { res.status(409).json({ error: "Request is no longer pending" }); return; }
@@ -85,7 +85,7 @@ router.post("/dm/request/:id/reject", async (req: Request, res: Response) => {
   const [updated] = await db
     .update(dmRequestsTable)
     .set({ status: "rejected" })
-    .where(eq(dmRequestsTable.id, req.params.id))
+    .where(eq(dmRequestsTable.id, String(req.params.id)))
     .returning();
 
   res.json(updated);
@@ -195,7 +195,7 @@ router.get("/dm/conversations", async (req: Request, res: Response) => {
 router.get("/dm/conversations/:userId", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  const otherId = req.params.userId;
+  const otherId = String(req.params.userId);
   const convId = conversationId(req.user.id, otherId);
 
   // Verify accepted request exists
@@ -242,7 +242,7 @@ router.get("/dm/conversations/:userId", async (req: Request, res: Response) => {
 router.post("/dm/conversations/:userId", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  const otherId = req.params.userId;
+  const otherId = String(req.params.userId);
   const { body } = req.body as { body?: string };
   if (!body?.trim()) { res.status(400).json({ error: "Message body is required" }); return; }
 

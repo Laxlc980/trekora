@@ -50,7 +50,7 @@ router.get("/treks/:trekId/join-requests", async (req: Request, res: Response) =
   const requests = await db
     .select()
     .from(joinRequestsTable)
-    .where(eq(joinRequestsTable.trekId, req.params.trekId));
+    .where(eq(joinRequestsTable.trekId, String(req.params.trekId)));
   const formatted = await Promise.all(requests.map(formatJoinRequest));
   res.json(formatted);
 });
@@ -60,7 +60,7 @@ router.post("/treks/:trekId/join-requests", async (req: Request, res: Response) 
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const [trek] = await db.select().from(treksTable).where(eq(treksTable.id, req.params.trekId));
+  const [trek] = await db.select().from(treksTable).where(eq(treksTable.id, String(req.params.trekId)));
   if (!trek) {
     res.status(404).json({ error: "Trek not found" });
     return;
@@ -69,7 +69,7 @@ router.post("/treks/:trekId/join-requests", async (req: Request, res: Response) 
   const [existing] = await db
     .select()
     .from(joinRequestsTable)
-    .where(and(eq(joinRequestsTable.trekId, req.params.trekId), eq(joinRequestsTable.trekkerId, req.user.id)));
+    .where(and(eq(joinRequestsTable.trekId, String(req.params.trekId)), eq(joinRequestsTable.trekkerId, req.user.id)));
   if (existing) {
     res.status(400).json({ error: "You already have a join request for this trek" });
     return;
@@ -77,7 +77,7 @@ router.post("/treks/:trekId/join-requests", async (req: Request, res: Response) 
   const [jr] = await db
     .insert(joinRequestsTable)
     .values({
-      trekId: req.params.trekId,
+      trekId: String(req.params.trekId),
       trekkerId: req.user.id,
       agencyId: trek.agencyId,
       message: parsed.success ? (parsed.data.message ?? null) : null,
@@ -92,7 +92,7 @@ router.get("/join-requests/:requestId", async (req: Request, res: Response) => {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const [jr] = await db.select().from(joinRequestsTable).where(eq(joinRequestsTable.id, req.params.requestId));
+  const [jr] = await db.select().from(joinRequestsTable).where(eq(joinRequestsTable.id, String(req.params.requestId)));
   if (!jr) {
     res.status(404).json({ error: "Not found" });
     return;
@@ -115,7 +115,7 @@ router.put("/join-requests/:requestId", async (req: Request, res: Response) => {
     res.status(400).json({ error: "Invalid input" });
     return;
   }
-  const [jr] = await db.select().from(joinRequestsTable).where(eq(joinRequestsTable.id, req.params.requestId));
+  const [jr] = await db.select().from(joinRequestsTable).where(eq(joinRequestsTable.id, String(req.params.requestId)));
   if (!jr) {
     res.status(404).json({ error: "Not found" });
     return;
@@ -132,7 +132,7 @@ router.put("/join-requests/:requestId", async (req: Request, res: Response) => {
   const [updated] = await db
     .update(joinRequestsTable)
     .set({ status: parsed.data.status, updatedAt: new Date() })
-    .where(eq(joinRequestsTable.id, req.params.requestId))
+    .where(eq(joinRequestsTable.id, String(req.params.requestId)))
     .returning();
 
   if (parsed.data.status === "accepted") {

@@ -68,7 +68,7 @@ router.patch("/notifications/:notificationId/read", async (req: Request, res: Re
     .set({ read: true })
     .where(
       and(
-        eq(notificationsTable.id, req.params.notificationId),
+        eq(notificationsTable.id, String(req.params.notificationId)),
         eq(notificationsTable.userId, req.user.id),
       ),
     )

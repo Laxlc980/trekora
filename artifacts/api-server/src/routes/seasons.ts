@@ -22,7 +22,7 @@ export async function createDefaultSeasons(trekId: string) {
 
 // GET /treks/:trekId/seasons — list seasons for a trek
 router.get("/treks/:trekId/seasons", async (req: Request, res: Response) => {
-  const seasons = await db.select().from(trekPricingSeasonsTable).where(eq(trekPricingSeasonsTable.trekId, req.params.trekId));
+  const seasons = await db.select().from(trekPricingSeasonsTable).where(eq(trekPricingSeasonsTable.trekId, String(req.params.trekId)));
   res.json(seasons.map((s) => ({
     id: s.id, trekId: s.trekId, seasonName: s.seasonName,
     startDate: s.startDate, endDate: s.endDate,
@@ -34,8 +34,8 @@ router.get("/treks/:trekId/seasons", async (req: Request, res: Response) => {
 router.put("/treks/:trekId/seasons/:seasonId", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
 
-  const [season] = await db.select().from(trekPricingSeasonsTable).where(eq(trekPricingSeasonsTable.id, req.params.seasonId));
-  if (!season || season.trekId !== req.params.trekId) { res.status(404).json({ error: "Season not found" }); return; }
+  const [season] = await db.select().from(trekPricingSeasonsTable).where(eq(trekPricingSeasonsTable.id, String(req.params.seasonId)));
+  if (!season || season.trekId !== String(req.params.trekId)) { res.status(404).json({ error: "Season not found" }); return; }
 
   const { priceMultiplier, label, startDate, endDate } = req.body;
   const updates: Record<string, unknown> = {};
@@ -44,7 +44,7 @@ router.put("/treks/:trekId/seasons/:seasonId", async (req: Request, res: Respons
   if (startDate !== undefined) updates.startDate = startDate;
   if (endDate !== undefined) updates.endDate = endDate;
 
-  const [updated] = await db.update(trekPricingSeasonsTable).set(updates).where(eq(trekPricingSeasonsTable.id, req.params.seasonId)).returning();
+  const [updated] = await db.update(trekPricingSeasonsTable).set(updates).where(eq(trekPricingSeasonsTable.id, String(req.params.seasonId))).returning();
   res.json({ id: updated.id, trekId: updated.trekId, seasonName: updated.seasonName, startDate: updated.startDate, endDate: updated.endDate, priceMultiplier: Number(updated.priceMultiplier), label: updated.label });
 });
 

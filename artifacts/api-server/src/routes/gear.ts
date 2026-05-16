@@ -33,7 +33,7 @@ router.post("/gear-rentals", async (req: Request, res: Response) => {
 
 router.put("/gear-rentals/:id", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const [item] = await db.select().from(gearRentalsTable).where(eq(gearRentalsTable.id, req.params.id));
+  const [item] = await db.select().from(gearRentalsTable).where(eq(gearRentalsTable.id, String(req.params.id)));
   if (!item || item.agencyId !== req.user.id) { res.status(403).json({ error: "Forbidden" }); return; }
 
   const updates: Record<string, unknown> = {};
@@ -46,15 +46,15 @@ router.put("/gear-rentals/:id", async (req: Request, res: Response) => {
   if (imageUrl !== undefined) updates.imageUrl = imageUrl;
   if (category !== undefined) updates.category = category;
 
-  const [updated] = await db.update(gearRentalsTable).set(updates).where(eq(gearRentalsTable.id, req.params.id)).returning();
+  const [updated] = await db.update(gearRentalsTable).set(updates).where(eq(gearRentalsTable.id, String(req.params.id))).returning();
   res.json({ ...updated, pricePerDay: Number(updated.pricePerDay), depositAmount: Number(updated.depositAmount), createdAt: updated.createdAt.toISOString() });
 });
 
 router.delete("/gear-rentals/:id", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const [item] = await db.select().from(gearRentalsTable).where(eq(gearRentalsTable.id, req.params.id));
+  const [item] = await db.select().from(gearRentalsTable).where(eq(gearRentalsTable.id, String(req.params.id)));
   if (!item || item.agencyId !== req.user.id) { res.status(403).json({ error: "Forbidden" }); return; }
-  await db.delete(gearRentalsTable).where(eq(gearRentalsTable.id, req.params.id));
+  await db.delete(gearRentalsTable).where(eq(gearRentalsTable.id, String(req.params.id)));
   res.json({ success: true });
 });
 
@@ -83,7 +83,7 @@ router.post("/secondhand", async (req: Request, res: Response) => {
 
 router.put("/secondhand/:id", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const [item] = await db.select().from(secondhandGearTable).where(eq(secondhandGearTable.id, req.params.id));
+  const [item] = await db.select().from(secondhandGearTable).where(eq(secondhandGearTable.id, String(req.params.id)));
   if (!item || item.sellerId !== req.user.id) { res.status(403).json({ error: "Forbidden" }); return; }
 
   const updates: Record<string, unknown> = {};
@@ -97,23 +97,23 @@ router.put("/secondhand/:id", async (req: Request, res: Response) => {
   if (location !== undefined) updates.location = location;
   if (contactPreference !== undefined) updates.contactPreference = contactPreference;
 
-  const [updated] = await db.update(secondhandGearTable).set(updates).where(eq(secondhandGearTable.id, req.params.id)).returning();
+  const [updated] = await db.update(secondhandGearTable).set(updates).where(eq(secondhandGearTable.id, String(req.params.id))).returning();
   res.json({ ...updated, priceNPR: Number(updated.priceNPR), createdAt: updated.createdAt.toISOString() });
 });
 
 router.delete("/secondhand/:id", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const [item] = await db.select().from(secondhandGearTable).where(eq(secondhandGearTable.id, req.params.id));
+  const [item] = await db.select().from(secondhandGearTable).where(eq(secondhandGearTable.id, String(req.params.id)));
   if (!item || item.sellerId !== req.user.id) { res.status(403).json({ error: "Forbidden" }); return; }
-  await db.delete(secondhandGearTable).where(eq(secondhandGearTable.id, req.params.id));
+  await db.delete(secondhandGearTable).where(eq(secondhandGearTable.id, String(req.params.id)));
   res.json({ success: true });
 });
 
 router.post("/secondhand/:id/mark-sold", async (req: Request, res: Response) => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Unauthorized" }); return; }
-  const [item] = await db.select().from(secondhandGearTable).where(eq(secondhandGearTable.id, req.params.id));
+  const [item] = await db.select().from(secondhandGearTable).where(eq(secondhandGearTable.id, String(req.params.id)));
   if (!item || item.sellerId !== req.user.id) { res.status(403).json({ error: "Forbidden" }); return; }
-  const [updated] = await db.update(secondhandGearTable).set({ sold: true }).where(eq(secondhandGearTable.id, req.params.id)).returning();
+  const [updated] = await db.update(secondhandGearTable).set({ sold: true }).where(eq(secondhandGearTable.id, String(req.params.id))).returning();
   res.json({ ...updated, priceNPR: Number(updated.priceNPR), createdAt: updated.createdAt.toISOString() });
 });
 

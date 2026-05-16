@@ -275,7 +275,7 @@ router.post("/admin/sos-alerts/:id/resolve", async (req: Request, res: Response)
   const [updated] = await db
     .update(sosAlertsTable)
     .set({ resolved: true, resolvedAt: new Date() })
-    .where(eq(sosAlertsTable.id, req.params.id))
+    .where(eq(sosAlertsTable.id, String(req.params.id)))
     .returning();
 
   if (!updated) {

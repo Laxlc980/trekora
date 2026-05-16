@@ -171,7 +171,7 @@ router.get("/users/profile/:username", async (req: Request, res: Response) => {
   const [user] = await db
     .select()
     .from(usersTable)
-    .where(eq(usersTable.username, req.params.username));
+    .where(eq(usersTable.username, String(req.params.username)));
 
   if (!user) {
     res.status(404).json({ error: "User not found" });

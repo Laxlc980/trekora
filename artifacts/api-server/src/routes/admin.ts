@@ -106,16 +106,16 @@ router.get("/admin/users", async (req: Request, res: Response) => {
 router.post("/admin/users/:id/ban", async (req: Request, res: Response) => {
   if (!(await isAdmin(req, res))) return;
 
-  const [user] = await db.select({ isBanned: usersTable.isBanned }).from(usersTable).where(eq(usersTable.id, req.params.id));
+  const [user] = await db.select({ isBanned: usersTable.isBanned }).from(usersTable).where(eq(usersTable.id, String(req.params.id)));
   if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
   const [updated] = await db
     .update(usersTable)
     .set({ isBanned: !user.isBanned, updatedAt: new Date() })
-    .where(eq(usersTable.id, req.params.id))
+    .where(eq(usersTable.id, String(req.params.id)))
     .returning({ isBanned: usersTable.isBanned });
 
-  res.json({ id: req.params.id, isBanned: updated.isBanned });
+  res.json({ id: String(req.params.id), isBanned: updated.isBanned });
 });
 
 // ---------------------------------------------------------------------------
@@ -209,7 +209,7 @@ router.post("/admin/sos/:id/resolve", async (req: Request, res: Response) => {
   const [updated] = await db
     .update(sosAlertsTable)
     .set({ resolved: true, resolvedAt: new Date() })
-    .where(eq(sosAlertsTable.id, req.params.id))
+    .where(eq(sosAlertsTable.id, String(req.params.id)))
     .returning();
 
   if (!updated) { res.status(404).json({ error: "Alert not found" }); return; }
@@ -259,7 +259,7 @@ router.post("/admin/offline-permits/:id/confirm", async (req: Request, res: Resp
   const [updated] = await db
     .update(userPermitsTable)
     .set({ status: "paid", paidAt: new Date(), permitNumber })
-    .where(eq(userPermitsTable.id, req.params.id))
+    .where(eq(userPermitsTable.id, String(req.params.id)))
     .returning();
 
   if (!updated) { res.status(404).json({ error: "Permit not found" }); return; }

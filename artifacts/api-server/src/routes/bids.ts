@@ -25,7 +25,7 @@ async function formatBid(bid: typeof bidsTable.$inferSelect) {
 }
 
 router.get("/custom-requests/:requestId/bids", async (req: Request, res: Response) => {
-  const bids = await db.select().from(bidsTable).where(eq(bidsTable.customRequestId, req.params.requestId));
+  const bids = await db.select().from(bidsTable).where(eq(bidsTable.customRequestId, String(req.params.requestId)));
   const formatted = await Promise.all(bids.map(formatBid));
   res.json(formatted);
 });
@@ -45,7 +45,7 @@ router.post("/custom-requests/:requestId/bids", async (req: Request, res: Respon
     res.status(400).json({ error: "Invalid input" });
     return;
   }
-  const [cr] = await db.select().from(customRequestsTable).where(eq(customRequestsTable.id, req.params.requestId));
+  const [cr] = await db.select().from(customRequestsTable).where(eq(customRequestsTable.id, String(req.params.requestId)));
   if (!cr || cr.status !== "open") {
     res.status(400).json({ error: "Custom request is not open for bids" });
     return;
@@ -53,7 +53,7 @@ router.post("/custom-requests/:requestId/bids", async (req: Request, res: Respon
   const [bid] = await db
     .insert(bidsTable)
     .values({
-      customRequestId: req.params.requestId,
+      customRequestId: String(req.params.requestId),
       agencyId: req.user.id,
       proposedPrice: String(parsed.data.proposedPrice),
       planDescription: parsed.data.planDescription,
@@ -68,7 +68,7 @@ router.post("/custom-requests/:requestId/bids", async (req: Request, res: Respon
     title: "New Bid on Your Request",
     message: `${agencyDisplayName} placed a bid of $${parsed.data.proposedPrice} on your trip to ${cr.destination}. View it in your dashboard.`,
     type: "bid_received",
-    actionUrl: `/custom-requests/${req.params.requestId}`,
+    actionUrl: `/custom-requests/${String(req.params.requestId)}`,
   }).catch(() => {});
 
   res.status(201).json(await formatBid(bid));
@@ -79,7 +79,7 @@ router.post("/bids/:bidId/select", async (req: Request, res: Response) => {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const [bid] = await db.select().from(bidsTable).where(eq(bidsTable.id, req.params.bidId));
+  const [bid] = await db.select().from(bidsTable).where(eq(bidsTable.id, String(req.params.bidId)));
   if (!bid) {
     res.status(404).json({ error: "Bid not found" });
     return;
@@ -92,11 +92,11 @@ router.post("/bids/:bidId/select", async (req: Request, res: Response) => {
   const [selectedBid] = await db
     .update(bidsTable)
     .set({ status: "selected", updatedAt: new Date() })
-    .where(eq(bidsTable.id, req.params.bidId))
+    .where(eq(bidsTable.id, String(req.params.bidId)))
     .returning();
   await db
     .update(customRequestsTable)
-    .set({ status: "closed", selectedBidId: req.params.bidId, updatedAt: new Date() })
+    .set({ status: "closed", selectedBidId: String(req.params.bidId), updatedAt: new Date() })
     .where(eq(customRequestsTable.id, bid.customRequestId));
 
   createNotification({
@@ -125,7 +125,7 @@ router.post("/bids/:bidId/reject", async (req: Request, res: Response) => {
     return;
   }
 
-  const [bid] = await db.select().from(bidsTable).where(eq(bidsTable.id, req.params.bidId));
+  const [bid] = await db.select().from(bidsTable).where(eq(bidsTable.id, String(req.params.bidId)));
   if (!bid) {
     res.status(404).json({ error: "Bid not found" });
     return;
@@ -147,7 +147,7 @@ router.post("/bids/:bidId/reject", async (req: Request, res: Response) => {
   const [rejected] = await db
     .update(bidsTable)
     .set({ status: "rejected", rejectionMessage: parsed.data.message, updatedAt: new Date() })
-    .where(eq(bidsTable.id, req.params.bidId))
+    .where(eq(bidsTable.id, String(req.params.bidId)))
     .returning();
 
   createNotification({
