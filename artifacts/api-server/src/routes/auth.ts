@@ -25,7 +25,8 @@ const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 const router: IRouter = Router();
 
 // 20 requests per 15 minutes per IP for all auth initiation endpoints
-const authRateLimiter = rateLimit({
+const rateLimitFn = ((rateLimit as any).default ?? rateLimit) as typeof rateLimit;
+const authRateLimiter = rateLimitFn({
   windowMs: 15 * 60 * 1000,
   limit: 20,
   standardHeaders: "draft-8",
