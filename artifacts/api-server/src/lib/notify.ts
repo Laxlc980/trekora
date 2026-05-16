@@ -1,8 +1,8 @@
 // @ts-nocheck
 import { db, notificationsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { sendEmail } from "./email";
-import { logger } from "./logger";
+import { sendEmail } from "./email.js";
+import { logger } from "./logger.js";
 
 export type NotificationType = "join_accepted" | "join_rejected" | "bid_received" | "bid_selected";
 

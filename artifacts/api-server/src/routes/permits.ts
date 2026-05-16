@@ -3,7 +3,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, permitTypesTable, userPermitsTable, usersTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
-import { logger } from "../lib/logger";
+import { logger } from "../lib/logger.js";
 
 const router: IRouter = Router();
 

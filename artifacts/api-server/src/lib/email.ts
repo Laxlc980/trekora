@@ -1,6 +1,6 @@
 // @ts-nocheck
 import nodemailer from "nodemailer";
-import { logger } from "./logger";
+import { logger } from "./logger.js";
 
 function createTransporter() {
   const host = process.env.SMTP_HOST;

@@ -11,7 +11,7 @@ import {
   getSession,
   updateSession,
   type SessionData,
-} from "../lib/auth";
+} from "../lib/auth.js";
 
 declare global {
   namespace Express {

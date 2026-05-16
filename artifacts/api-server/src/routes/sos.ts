@@ -2,9 +2,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, sosAlertsTable, bookingsTable, treksTable, usersTable, emergencyContactsTable } from "@workspace/db";
 import { eq, and, desc, lte, gte } from "drizzle-orm";
-import { createNotification } from "../lib/notify";
-import { sendEmail } from "../lib/email";
-import { logger } from "../lib/logger";
+import { createNotification } from "../lib/notify.js";
+import { sendEmail } from "../lib/email.js";
+import { logger } from "../lib/logger.js";
 
 const router: IRouter = Router();
 

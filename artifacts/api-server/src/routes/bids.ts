@@ -3,7 +3,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, bidsTable, customRequestsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { CreateBidBody, RejectBidBody } from "@workspace/api-zod";
-import { createNotification } from "../lib/notify";
+import { createNotification } from "../lib/notify.js";
 
 const router: IRouter = Router();
 

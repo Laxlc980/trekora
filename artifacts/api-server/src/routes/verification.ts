@@ -2,7 +2,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { createNotification } from "../lib/notify";
+import { createNotification } from "../lib/notify.js";
 
 const router: IRouter = Router();
 

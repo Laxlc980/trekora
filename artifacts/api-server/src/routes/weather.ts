@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Router, type IRouter, type Request, type Response } from "express";
-import { logger } from "../lib/logger";
+import { logger } from "../lib/logger.js";
 
 const router: IRouter = Router();
 

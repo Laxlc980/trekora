@@ -3,7 +3,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, treksTable, usersTable, trekPricingSeasonsTable, reviewsTable } from "@workspace/db";
 import { eq, desc, sql, inArray, count, and, gte, lte, like, avg } from "drizzle-orm";
 import { CreateTrekBody, UpdateTrekBody, ListTreksQueryParams } from "@workspace/api-zod";
-import { createDefaultSeasons } from "./seasons";
+import { createDefaultSeasons } from "./seasons.js";
 
 const router: IRouter = Router();
 

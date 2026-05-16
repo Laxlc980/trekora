@@ -3,7 +3,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, joinRequestsTable, treksTable, usersTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { CreateJoinRequestBody, UpdateJoinRequestBody } from "@workspace/api-zod";
-import { createNotification } from "../lib/notify";
+import { createNotification } from "../lib/notify.js";
 
 const router: IRouter = Router();
 
