@@ -1,6 +1,6 @@
 import * as oidc from "openid-client";
 import { Router, type IRouter, type Request, type Response } from "express";
-import rateLimit from "express-rate-limit";
+import { rateLimit } from "express-rate-limit";
 import {
   GetCurrentAuthUserResponse,
   ExchangeMobileAuthorizationCodeBody,
@@ -25,8 +25,7 @@ const OIDC_COOKIE_TTL = 10 * 60 * 1000;
 const router: IRouter = Router();
 
 // 20 requests per 15 minutes per IP for all auth initiation endpoints
-const rateLimitFn: any = (rateLimit as any).default ?? rateLimit;
-const authRateLimiter = rateLimitFn({
+const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,
   standardHeaders: "draft-8",
