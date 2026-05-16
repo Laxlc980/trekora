@@ -89,7 +89,7 @@ router.get("/treks", async (req: Request, res: Response) => {
       conditions.push(inArray(treksTable.agencyId, verifiedIds));
     } else {
       // No verified agencies — return empty
-      res.json({ data: [], pagination: { page, limit, total: 0, hasMore: false } });
+      res.json([]);
       return;
     }
   }
@@ -132,15 +132,14 @@ router.get("/treks", async (req: Request, res: Response) => {
     reviewStats.map((r) => [r.trekId, { averageRating: r.avgRating ? Number(Number(r.avgRating).toFixed(1)) : null, reviewCount: r.reviewCount }]),
   );
 
-  res.json({
-    data: treks.map((t) => ({
+  res.json(
+    treks.map((t) => ({
       ...formatTrek(t, agencyMap[t.agencyId]?.name),
       isAgencyVerified: agencyMap[t.agencyId]?.isVerified ?? false,
       averageRating: reviewMap[t.id]?.averageRating ?? null,
       reviewCount: reviewMap[t.id]?.reviewCount ?? 0,
-    })),
-    pagination: { page, limit, total, hasMore: offset + treks.length < total },
-  });
+    }))
+  );
 });
 
 router.post("/treks", async (req: Request, res: Response) => {
