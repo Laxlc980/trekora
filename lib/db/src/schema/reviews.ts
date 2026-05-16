@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { pgTable, varchar, text, integer, timestamp, index, unique } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 

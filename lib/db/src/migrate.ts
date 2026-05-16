@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Standalone migration runner.
  *

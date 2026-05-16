@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db, notificationsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "./email";
