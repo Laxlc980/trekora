@@ -32,8 +32,8 @@ router.get("/notifications", async (req: Request, res: Response) => {
     .limit(limit)
     .offset(offset);
 
-  res.json({
-    data: notifications.map((n) => ({
+  res.json(
+    notifications.map((n) => ({
       id: n.id,
       userId: n.userId,
       title: n.title,
@@ -42,8 +42,7 @@ router.get("/notifications", async (req: Request, res: Response) => {
       read: n.read,
       createdAt: n.createdAt.toISOString(),
     })),
-    pagination: { page, limit, total, hasMore: offset + notifications.length < total },
-  });
+  );
 });
 
 router.patch("/notifications/read-all", async (req: Request, res: Response) => {

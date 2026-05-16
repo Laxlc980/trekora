@@ -34,8 +34,8 @@ router.get("/threads", async (req: Request, res: Response) => {
     .limit(limit)
     .offset(offset);
 
-  res.json({
-    data: threads.map((t) => ({
+  res.json(
+    threads.map((t) => ({
       id: t.id,
       title: t.title,
       body: t.body,
@@ -45,8 +45,7 @@ router.get("/threads", async (req: Request, res: Response) => {
       replyCount: t.replyCount,
       createdAt: t.createdAt.toISOString(),
     })),
-    pagination: { page, limit, total, hasMore: offset + threads.length < total },
-  });
+  );
 });
 
 router.post("/threads", async (req: Request, res: Response) => {
